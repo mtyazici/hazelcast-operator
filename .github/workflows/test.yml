@@ -1,0 +1,17 @@
+name: operator-auto-release
+on:
+  workflow_dispatch:
+  push:
+
+
+
+
+jobs:
+  build:
+    defaults:
+      run:
+        shell: bash
+
+    runs-on: ubuntu-latest
+    steps:
+      run: docker --version
