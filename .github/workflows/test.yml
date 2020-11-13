@@ -22,4 +22,4 @@ jobs:
           set -x
           sudo curl -L -o /operator-sdk "https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu"
           sudo chmod +x /operator-sdk
-          /operator-sdk version
+          sudo /operator-sdk version

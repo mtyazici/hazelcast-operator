@@ -1,0 +1,91 @@
+name: operator-auto-release
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - master
+
+
+
+jobs:
+  build:
+    defaults:
+      run:
+        shell: bash
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+      RHEL_REPO_PASSWORD: ${{ secrets.RHEL_REPO_PASSWORD }}
+      RHEL_BUNDLE_PASSWORD: ${{ secrets.RHEL_BUNDLE_PASSWORD }}
+      OPERATOR-SDK-VERSION: "v0.17.2"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '8' ]
+        architecture: [ 'x64' ]
+    steps:
+      # SET UP JDK
+      - name: Verify Docker Installation
+        run: docker --version
+
+      - run : mkdir ~/lib
+
+      # BUILD HAZELCAST AZURE SNAPSHOT
+      - uses: actions/checkout@v2.3.4
+        with:
+          path: hazelcast-azure
+
+      - name: Build hazelcast-azure jar
+        run: |
+          cd hazelcast-azure
+          mvn clean install -DskipTests
+          echo "Hazelcast Azure jar is: " target/hazelcast-azure-*-SNAPSHOT.jar
+          cp target/hazelcast-azure-*-SNAPSHOT.jar ~/lib/hazelcast-azure.jar
+      # DOWNLOAD HAZELCAST JAR WITH VERSION DEFINED IN POM.XML
+      - name: Download latest Hazelcast version
+        run: |
+          HZ_VERSION=$(cat hazelcast-azure/pom.xml | grep -m 1 -Po "<hazelcast.version>\K[-_.a-zA-Z0-9]+(?=</hazelcast.version)")
+          if [[ $hz_version == *"SNAPSHOT"* ]]; then
+            export HZ_JAR_REPO_URL="https://oss.sonatype.org/content/repositories/snapshots"
+          else
+            export HZ_JAR_REPO_URL="https://repo1.maven.org/maven2"
+          fi
+          mvn dependency:get -DgroupId=com.hazelcast -DartifactId=hazelcast -Dversion=${HZ_VERSION} \
+                  -Dpackaging=jar -DremoteRepositories=${HZ_JAR_REPO_URL}
+          cp ~/.m2/repository/com/hazelcast/hazelcast/${HZ_VERSION}/hazelcast-${HZ_VERSION}.jar ~/lib/hazelcast.jar
+      #BUILD TERRAFORM
+      - name : Set-up Terraform
+        uses: hashicorp/setup-terraform@v1.2.1
+        with:
+          terraform_version: 0.13.0
+
+      - name: Create unique prefix for resources
+        run: |
+          sed -i -e "s/SET_PREFIX/\"${GITHUB_WORKFLOW}-${GITHUB_RUN_ID}\"/g" hazelcast-azure/.github/terraform/terraform.tfvars
+      - name: Terraform Init
+        run: cd hazelcast-azure/.github/terraform && terraform init
+
+      - name: Terraform Format
+        run: cd hazelcast-azure/.github/terraform  && terraform fmt
+
+      - name: Install private key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          name: id_rsa
+          known_hosts: " "
+
+      - name: Install public key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PUBLIC_KEY }}
+          name: id_rsa.pub
+          known_hosts: " "
+
+      - name: Terraform Apply
+        run: |
+          cd hazelcast-azure/.github/terraform && terraform apply -auto-approve
+      - name: Terraform Destroy
+        if: ${{ always() }}
+        run: |
+          cd hazelcast-azure/.github/terraform && terraform destroy -auto-approve
