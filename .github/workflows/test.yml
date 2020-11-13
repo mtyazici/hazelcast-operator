@@ -33,6 +33,7 @@ jobs:
           tar xvzf oc.tar.gz
           ls
           pwd
+          ls ..
 
 
           
