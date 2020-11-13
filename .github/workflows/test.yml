@@ -12,7 +12,7 @@ jobs:
       run:
         shell: bash
     env:
-          OPERATOR-SDK-VERSION: "v0.17.2"
+      OPERATOR-SDK-VERSION: "v0.17.2"
 
     runs-on: ubuntu-latest
     steps:
