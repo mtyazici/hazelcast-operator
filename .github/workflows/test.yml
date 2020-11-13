@@ -24,4 +24,16 @@ jobs:
           set -x
           sudo curl -L -o /operator-sdk "https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk-${OPERATOR_SDK_VERSION}-x86_64-linux-gnu"
           sudo chmod +x /operator-sdk
-          sudo /operator-sdk version
+          /operator-sdk version
+
+      - name: Install oc
+        run: |
+          set -x
+          curl -L -o ./oc.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz"
+          tar xvzf oc.tar.gz
+          ls
+          pwd
+
+
+          
+          
