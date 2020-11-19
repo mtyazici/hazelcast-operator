@@ -1,10 +1,37 @@
 name: operator-auto-release
 on:
   workflow_dispatch:
-  push:
-
-
-
+    inputs:
+      OPERATOR_VERSION:
+        description: 'operator version'     
+        required: true
+        default: 'warning'
+      tags:
+        description: 'Test scenario tags'  
+      PREVIOUS_OPERATOR_VERSION:
+        description: 'operator version'     
+        required: true
+        default: 'warning'
+      tags:
+        description: 'Test scenario tags'  
+      HELM_CHART_VERSION:
+        description: 'operator version'     
+        required: true
+        default: 'warning'
+      tags:
+        description: 'Test scenario tags'  
+      DEFAULT_HAZELCAST_VERSION:
+        description: 'operator version'     
+        required: true
+        default: 'warning'
+      tags:
+        description: 'Test scenario tags'  
+      DEFAULT_MANCENTER_VERSION:
+        description: 'operator version'     
+        required: true
+        default: 'warning'
+      tags:
+        description: 'Test scenario tags'  
 
 jobs:
   build:
@@ -12,11 +39,23 @@ jobs:
       run:
         shell: bash
     env:
-      OPERATOR_SDK_VERSION: v0.17.2
-
+      OPERATOR_SDK_VERSION: "v0.17.2"
+      KIND: "Hazelcast"
+      NAME: "hazelcast"
+      REPO: "docker-hub"
+      OPERATOR_VERSION: ${{ github.event.inputs.OPERATOR_VERSION }}
+      PREVIOUS_OPERATOR_VERSION: ${{ github.event.inputs.PREVIOUS_OPERATOR_VERSION }}
+      HELM_CHART_VERSION: ${{ github.event.inputs.HELM_CHART_VERSION }}
+      DEFAULT_HAZELCAST_VERSION: ${{ github.event.inputs.DEFAULT_HAZELCAST_VERSION }}
+      DEFAULT_MANCENTER_VERSION: ${{ github.event.inputs.DEFAULT_MANCENTER_VERSION }}
+      OPERATOR_NAME: "${NAME}-operator"
+      OPERATOR_REPOSITORY: "hazelcast/${OPERATOR_NAME}"
+      OPERATOR_IMAGE: ${OPERATOR_REPOSITORY}:${OPERATOR_VERSION} 
     runs-on: ubuntu-latest
     steps:
-      - run: docker --version
+
+      - name: Check Docker 
+        run: docker --version
 
 
       - name: Install Operator-Sdk
@@ -31,10 +70,115 @@ jobs:
           set -x
           curl -L -o ./oc.tar.gz "https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz"
           tar xvzf oc.tar.gz
-          ls
-          pwd
-          ls ..
+          mv oc /oc
+          /oc version
 
+      - name: Install opm
+        run: |
+          set -x
+          /oc image extract quay.io/openshift/origin-operator-registry:4.6.0 --path /usr/bin/opm:. --confirm
+          chmod +x ./opm
+          sudo mv opm /opm
+          /opm version
+        
+      - name: Check for utility packages
+        run: | 
+          echo "Checking dependencies..."
+          for dep in wget zip jq; do
+              if hash ${dep} 2>/dev/null; then
+                  echo ${dep} installed...
+              else
+                  sudo apt install ${dep} -y
+                  if hash ${dep} 2>/dev/null; then
+                    echo ${dep} installed...
+                  else
+                    echo ${dep} could not be installed!
+                    exit 1
+                  fi
+              fi
+          done
+
+      - name: Checkout tools repo
+        uses: actions/checkout@v2
+        with:
+          repository: hazelcast/hazelcast-qe
+          ref: master
+          path: hazelcast-qe
+      
+      -name: Copy licenses, operatorhub-bundle, rhel-operator-bundle from the repo
+        run: |
+          cp -r ./hazelcast-qe/it/ocp-automation/operator/licenses \
+             ./hazelcast-qe/it/ocp-automation/operator/operatorhub-bundle \
+             ./hazelcast-qe/it/ocp-automation/operator/rhel-operator-bundle  \
+             .
+
+      - name: Install Hazelcast Helm Chart
+        run: |
+          mkdir WORKDIR
+          cd WORKDIR
+          if [ $(wget -q "https://hazelcast-charts.s3.amazonaws.com/${NAME}-${HELM_CHART_VERSION}.tgz" ; echo $? = "0") ]; then 
+            echo "${NAME}-${HELM_CHART_VERSION} chart is downloaded" 
+          else 
+            echo "${NAME}-${HELM_CHART_VERSION} chart could not downloaded" 
+          fi 
+          tar xf ${NAME}-${HELM_CHART_VERSION}.tgz
+        
+
+      - name: Overwrite template values
+        working-directory: ./WORKDIR
+        run: |
+        function run_sed_i {
+          SED_SCRIPT=$1
+          FILE=$2
+          sed -i'' "$1" $2
+        } 
+        cat <<'EOF' > new_image_block
+            {{- if and (.Values.image.repository ) (.Values.image.tag) }}
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+            {{- else }}
+            image: "{{ .Values.image.repositoryOverride }}:{{ .Values.image.tagOverride }}"
+            {{- end }}
+        EOF
+        run_sed_i '/image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"/d' ${NAME}/templates/statefulset.yaml 2>/dev/null
+        run_sed_i '/- name: {{ template "hazelcast.fullname" . }}/r new_image_block' ${NAME}/templates/statefulset.yaml 2>/dev/null
+        rm new_image_block
+
+        cat <<'EOF' > new_mc_image_block
+        {{- if and (.Values.mancenter.image.repository ) (.Values.mancenter.image.tag) }}
+        image: "{{ .Values.mancenter.image.repository }}:{{ .Values.mancenter.image.tag }}"
+        {{- else }}
+        image: "{{ .Values.mancenter.image.repositoryOverride }}:{{ .Values.mancenter.image.tagOverride }}"
+        {{- end }}
+        EOF
+        run_sed_i '/image: "{{ .Values.mancenter.image.repository }}:{{ .Values.mancenter.image.tag }}"/d' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
+        run_sed_i '/- name: {{ template "mancenter.fullname" . }}/r new_mc_image_block' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
+        rm new_mc_image_block
+
+
+        run_sed_i 's/repository/repositoryOverride/g' ${NAME}/values.yaml 2>/dev/null
+        run_sed_i 's/tag/tagOverride/g' ${NAME}/values.yaml 2>/dev/null
+
+      - name: Generate Operator and Operator Image
+        working-directory: ./WORKDIR
+        run: |
+          /operator-sdk new ${OPERATOR_NAME} --api-version=hazelcast.com/v1alpha1 --type=helm --kind=${KIND} --helm-chart=$(pwd)/${NAME}
+          cd ${OPERATOR_NAME}
+          cat >> watches.yaml <<EOL
+            overrideValues:
+              image.repositoryOverride: \${HAZELCAST_IMAGE_REPOSITORY}
+              image.tagOverride: \${HAZELCAST_IMAGE_TAG}
+              mancenter.image.repositoryOverride: \${MC_IMAGE_REPOSITORY}
+              mancenter.image.tagOverride: \${MC_IMAGE_TAG}
+          EOL
+
+          echo "Building the operator image ${OPERATOR_IMAGE}"
+          /operator-sdk build ${OPERATOR_IMAGE}
+
+      - name: Check for outputs
+        run: |
+          ls 
+          ls WORKDIR
+          
 
           
           
