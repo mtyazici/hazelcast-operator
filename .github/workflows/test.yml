@@ -127,36 +127,36 @@ jobs:
       - name: Overwrite template values
         working-directory: ./WORKDIR
         run: |
-        function run_sed_i {
-          SED_SCRIPT=$1
-          FILE=$2
-          sed -i'' "$1" $2
-        } 
-        cat <<'EOF' > new_image_block
-            {{- if and (.Values.image.repository ) (.Values.image.tag) }}
-            image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-            {{- else }}
-            image: "{{ .Values.image.repositoryOverride }}:{{ .Values.image.tagOverride }}"
-            {{- end }}
-        EOF
-        run_sed_i '/image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"/d' ${NAME}/templates/statefulset.yaml 2>/dev/null
-        run_sed_i '/- name: {{ template "hazelcast.fullname" . }}/r new_image_block' ${NAME}/templates/statefulset.yaml 2>/dev/null
-        rm new_image_block
+          function run_sed_i {
+            SED_SCRIPT=$1
+            FILE=$2
+            sed -i'' "$1" $2
+          } 
+          cat <<'EOF' > new_image_block
+              {{- if and (.Values.image.repository ) (.Values.image.tag) }}
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              {{- else }}
+              image: "{{ .Values.image.repositoryOverride }}:{{ .Values.image.tagOverride }}"
+              {{- end }}
+          EOF
+          run_sed_i '/image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"/d' ${NAME}/templates/statefulset.yaml 2>/dev/null
+          run_sed_i '/- name: {{ template "hazelcast.fullname" . }}/r new_image_block' ${NAME}/templates/statefulset.yaml 2>/dev/null
+          rm new_image_block
 
-        cat <<'EOF' > new_mc_image_block
-        {{- if and (.Values.mancenter.image.repository ) (.Values.mancenter.image.tag) }}
-        image: "{{ .Values.mancenter.image.repository }}:{{ .Values.mancenter.image.tag }}"
-        {{- else }}
-        image: "{{ .Values.mancenter.image.repositoryOverride }}:{{ .Values.mancenter.image.tagOverride }}"
-        {{- end }}
-        EOF
-        run_sed_i '/image: "{{ .Values.mancenter.image.repository }}:{{ .Values.mancenter.image.tag }}"/d' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
-        run_sed_i '/- name: {{ template "mancenter.fullname" . }}/r new_mc_image_block' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
-        rm new_mc_image_block
+          cat <<'EOF' > new_mc_image_block
+          {{- if and (.Values.mancenter.image.repository ) (.Values.mancenter.image.tag) }}
+          image: "{{ .Values.mancenter.image.repository }}:{{ .Values.mancenter.image.tag }}"
+          {{- else }}
+          image: "{{ .Values.mancenter.image.repositoryOverride }}:{{ .Values.mancenter.image.tagOverride }}"
+          {{- end }}
+          EOF
+          run_sed_i '/image: "{{ .Values.mancenter.image.repository }}:{{ .Values.mancenter.image.tag }}"/d' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
+          run_sed_i '/- name: {{ template "mancenter.fullname" . }}/r new_mc_image_block' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
+          rm new_mc_image_block
 
 
-        run_sed_i 's/repository/repositoryOverride/g' ${NAME}/values.yaml 2>/dev/null
-        run_sed_i 's/tag/tagOverride/g' ${NAME}/values.yaml 2>/dev/null
+          run_sed_i 's/repository/repositoryOverride/g' ${NAME}/values.yaml 2>/dev/null
+          run_sed_i 's/tag/tagOverride/g' ${NAME}/values.yaml 2>/dev/null
 
       - name: Generate Operator and Operator Image
         working-directory: ./WORKDIR
