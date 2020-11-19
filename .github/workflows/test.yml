@@ -105,7 +105,7 @@ jobs:
           ref: master
           path: hazelcast-qe
       
-      -name: Copy licenses, operatorhub-bundle, rhel-operator-bundle from the repo
+      - name: Copy licenses, operatorhub-bundle, rhel-operator-bundle from the repo
         run: |
           cp -r ./hazelcast-qe/it/ocp-automation/operator/licenses \
              ./hazelcast-qe/it/ocp-automation/operator/operatorhub-bundle \
