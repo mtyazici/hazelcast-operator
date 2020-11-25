@@ -146,6 +146,8 @@ jobs:
           echo "Building the operator image ${OPERATOR_IMAGE}"
           /operator-sdk build ${OPERATOR_IMAGE}
 
+          sed -i -e "s|REPLACE_IMAGE|${OPERATOR_IMAGE}|g" ./${OPERATOR_NAME}deploy/operator.yaml
+
 
       - name: Update Hazelcast Enterprise Operator files
         run: |
@@ -184,7 +186,7 @@ jobs:
           kubectl --validate=false apply -f operator-docker-hub.yaml
 
           #PUT LICENCE KEY IN secret.yaml
-          LICENSE_KEY=$(echo -n "${HZ_ENTERPRISE_LICENSE}" | base64)
+          LICENSE_KEY=$(echo -n "${HZ_ENTERPRISE_LICENSE}" | base64 -w 0)
           sed -i -e  "s/key: <base64-hz-license-key>/key: ${LICENSE_KEY}/g" ./secret.yaml
           kubectl apply -f secret.yaml
           
