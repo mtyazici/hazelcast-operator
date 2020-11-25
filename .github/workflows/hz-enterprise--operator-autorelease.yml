@@ -200,10 +200,24 @@ jobs:
 
       - name: Validate Cluster Size
         run: |
-          HZ_NAME = grep -m 1 -Po "name: \K.+" ./${OPERATOR_NAME}/hazelcast.yaml
+          HZ_NAME =$(grep -m 1 -Po "name: \K.+" ./${OPERATOR_NAME}/hazelcast.yaml)
           
           #WAIT FOR hz-hazelcast-enterprise-2 TO BE READY
-          kubectl wait --for=condition=Ready --timeout=150s pod/${HZ_NAME}-${NAME}-2 
+          for i in `seq 1 10`; do
+            if [[ $(kubectl get pods ${HZ_NAME}-${NAME}-2 -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; then
+              echo "waiting for pod ${HZ_NAME}-${NAME}-2 to be ready..." && sleep 15
+              if [ "$i" = "10" ]; then
+                echo "${HZ_NAME}-${NAME}-2 pod failed to be ready!"
+                kubectl get pods
+                echo ""
+                kubectl logs ${HZ_NAME}-${NAME}-2
+                exit 1
+              fi
+            else
+              echo "${HZ_NAME}-${NAME}-2 is ready!"
+              break
+            fi
+          done
 
           #WAIT FOR CLUSTER SIZE TO BE 3
           for i in `seq 1 5`; do
@@ -278,7 +292,7 @@ jobs:
       - name: Upload Operatorhub Bundle
         uses: actions/upload-artifact@v2
         with:
-          name: operator-hub-bundle
+          name: enterprise-operator-hub-bundle
           path: ./operatorhub-bundle-output
 
 
