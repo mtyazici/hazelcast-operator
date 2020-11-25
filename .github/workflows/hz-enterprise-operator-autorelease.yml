@@ -185,7 +185,7 @@ jobs:
 
           #PUT LICENCE KEY IN secret.yaml
           LICENCE_KEY=$(echo -n "${HZ_ENTERPRISE_LICENSE}" | base64)
-          sed -i -e  "s/key: <base64-hz-license-key>/key: ${LICENCE_KEY}/g" ./secret.yaml
+          sed -i -e  "s/key: <base64-hz-license-key>/key: \"${LICENCE_KEY}\"/g" ./secret.yaml
           kubectl apply -f secret.yaml
           
           #WAIT FOR OPERATOR TO BE READY
