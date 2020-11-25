@@ -184,7 +184,7 @@ jobs:
           kubectl --validate=false apply -f operator-docker-hub.yaml
 
           #PUT LICENCE KEY IN secret.yaml
-          LICENCE_KEY=$(echo -n "${HZ_LICENCE_KEY}" | base64)
+          LICENCE_KEY=$(echo -n "${HZ_ENTERPRISE_LICENSE}" | base64)
           sed -i -e  "s/key: <base64-hz-license-key>/key: ${LICENCE_KEY}/g" ./secret.yaml
           kubectl apply -f secret.yaml
           
@@ -322,5 +322,5 @@ jobs:
           git commit -am "Hazelcast-Enterprise-Operator is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
 
 
-      - name: Push artifacts to guides-site repo
+      - name: Push changes done to hazelcast-operator
         run: git push
