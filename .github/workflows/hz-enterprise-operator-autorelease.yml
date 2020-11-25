@@ -146,7 +146,7 @@ jobs:
           echo "Building the operator image ${OPERATOR_IMAGE}"
           /operator-sdk build ${OPERATOR_IMAGE}
 
-          sed -i -e "s|REPLACE_IMAGE|${OPERATOR_IMAGE}|g" ./${OPERATOR_NAME}deploy/operator.yaml
+          sed -i -e "s|REPLACE_IMAGE|${OPERATOR_IMAGE}|g" ./deploy/operator.yaml
 
 
       - name: Update Hazelcast Enterprise Operator files
