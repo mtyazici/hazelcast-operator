@@ -1,4 +1,4 @@
-name: hz-enterprise-operator-autorelease
+name: hz-enterprise-operator-dockerhub-autorelease
 on:
   workflow_dispatch:
     inputs:
