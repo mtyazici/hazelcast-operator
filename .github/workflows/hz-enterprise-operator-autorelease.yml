@@ -67,7 +67,6 @@ jobs:
       - name: Checkout to hazelcast-operator
         uses: actions/checkout@v2
         with:
-          ref: master
           path: operator-repo
       
 
@@ -87,11 +86,6 @@ jobs:
       - name: Overwrite template values
         working-directory: ./WORKDIR
         run: |
-          function run_sed_i {
-            SED_SCRIPT=$1
-            FILE=$2
-            sed -i'' "$1" $2
-          } 
           cat <<'EOF' > new_image_block
                   {{- if and (.Values.image.repository ) (.Values.image.tag) }}
                   image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -99,8 +93,8 @@ jobs:
                   image: "{{ .Values.image.repositoryOverride }}:{{ .Values.image.tagOverride }}"
                   {{- end }}
           EOF
-          run_sed_i '/image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"/d' ${NAME}/templates/statefulset.yaml 2>/dev/null
-          run_sed_i '/- name: {{ template "hazelcast.fullname" . }}/r new_image_block' ${NAME}/templates/statefulset.yaml 2>/dev/null
+          sed -i '/image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"/d' ${NAME}/templates/statefulset.yaml 2>/dev/null
+          sed -i '/- name: {{ template "hazelcast.fullname" . }}/r new_image_block' ${NAME}/templates/statefulset.yaml 2>/dev/null
           rm new_image_block
           cat <<'EOF' > new_mc_image_block
                   {{- if and (.Values.mancenter.image.repository ) (.Values.mancenter.image.tag) }}
@@ -109,11 +103,11 @@ jobs:
                   image: "{{ .Values.mancenter.image.repositoryOverride }}:{{ .Values.mancenter.image.tagOverride }}"
                   {{- end }}
           EOF
-          run_sed_i '/image: "{{ .Values.mancenter.image.repository }}:{{ .Values.mancenter.image.tag }}"/d' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
-          run_sed_i '/- name: {{ template "mancenter.fullname" . }}/r new_mc_image_block' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
+          sed -i '/image: "{{ .Values.mancenter.image.repository }}:{{ .Values.mancenter.image.tag }}"/d' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
+          sed -i '/- name: {{ template "mancenter.fullname" . }}/r new_mc_image_block' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
           rm new_mc_image_block
-          run_sed_i 's/repository/repositoryOverride/g' ${NAME}/values.yaml 2>/dev/null
-          run_sed_i 's/tag/tagOverride/g' ${NAME}/values.yaml 2>/dev/null
+          sed -i 's/repository/repositoryOverride/g' ${NAME}/values.yaml 2>/dev/null
+          sed -i 's/tag/tagOverride/g' ${NAME}/values.yaml 2>/dev/null
 
 
       - name: Upload Helm Charts
@@ -267,11 +261,7 @@ jobs:
         working-directory: .
         run: |
           RELEASE_DATE="$(date +%F)T11:59:59Z"
-          function run_sed_i {
-            SED_SCRIPT=$1
-            FILE=$2
-            sed -i'' "$1" $2
-          } 
+
           mkdir operatorhub-bundle-output
           mkdir operatorhub-bundle-output/${OPERATOR_VERSION}
 
@@ -282,14 +272,14 @@ jobs:
           cp operatorhub-bundle/${CRD_NAME}.hazelcast.com.crd.yaml  operatorhub-bundle-output/${OPERATOR_VERSION}/${CRD_NAME}.hazelcast.com.crd.yaml
 
           cd operatorhub-bundle-output/${OPERATOR_VERSION}
-          run_sed_i "s/PREVIOUS_OPERATOR_VERSION/${PREVIOUS_OPERATOR_VERSION}/g" ${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml
-          run_sed_i "s/OPERATOR_VERSION/${OPERATOR_VERSION}/g" ${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml
-          run_sed_i "s/HAZELCAST_IMAGE_VERSION/${DEFAULT_HAZELCAST_VERSION}/g" ${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml
-          run_sed_i "s/MANCENTER_IMAGE_VERSION/${DEFAULT_MANCENTER_VERSION}/g" ${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml
-          run_sed_i "s/RELEASE_DATE/${RELEASE_DATE}/g" ${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+          sed -i "s/PREVIOUS_OPERATOR_VERSION/${PREVIOUS_OPERATOR_VERSION}/g" ${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+          sed -i "s/OPERATOR_VERSION/${OPERATOR_VERSION}/g" ${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+          sed -i "s/HAZELCAST_IMAGE_VERSION/${DEFAULT_HAZELCAST_VERSION}/g" ${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+          sed -i "s/MANCENTER_IMAGE_VERSION/${DEFAULT_MANCENTER_VERSION}/g" ${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml
+          sed -i "s/RELEASE_DATE/${RELEASE_DATE}/g" ${OPERATOR_NAME}.v${OPERATOR_VERSION}.clusterserviceversion.yaml
 
           cd ..
-          run_sed_i "s/OPERATOR_VERSION/${OPERATOR_VERSION}/g" ${OPERATOR_NAME}.package.yaml
+          sed -i "s/OPERATOR_VERSION/${OPERATOR_VERSION}/g" ${OPERATOR_NAME}.package.yaml
 
 
       - name: Upload Operatorhub Bundle
@@ -308,22 +298,22 @@ jobs:
       - name: Update Hazelcast Versions in the Repo
         working-directory: ./hazelcast-repo
         run: |
-          sed -i -e  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-docker-hub.yaml
-          sed -i -e  "s/image: hazelcast\/${OPERATOR_NAME}:.*/image: hazelcast\/${OPERATOR_NAME}:${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-docker-hub.yaml
+          sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-docker-hub.yaml
+          sed -i "s/image: hazelcast\/${OPERATOR_NAME}:.*/image: hazelcast\/${OPERATOR_NAME}:${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-docker-hub.yaml
 
-          sed -i -e "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
-          sed -i -e "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
-          sed -i -e "0,/tag: .*/s//tag: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
-          sed -i -e "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: .*/s//tag: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
+          sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
 
-      - name: Commit changes done to hazelcast-operator
+      - name: Commit changes done to hazelcast-enterprise-operator
         run: |
           git config --global user.name 'devOpsHazelcast'
           git config --global user.email 'devops@hazelcast.com'
           git commit -am "Hazelcast-Enterprise-Operator is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
 
 
-      - name: Push changes done to hazelcast-operator
+      - name: Push changes done to hazelcast-enterprise-operator
         run: git push
