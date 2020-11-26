@@ -266,6 +266,7 @@ jobs:
       - name: Build Operatorhub Bundle
         working-directory: .
         run: |
+          RELEASE_DATE="$(date +%F)T11:59:59Z"
           function run_sed_i {
             SED_SCRIPT=$1
             FILE=$2
