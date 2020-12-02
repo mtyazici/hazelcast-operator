@@ -298,7 +298,7 @@ jobs:
           sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
           sed -i "0,/tag: .*/s//tag: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
-          sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: /! s/tag: .*/tag: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
 
           linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/operator.yaml))
           sed -i "${linesArray[2]}s/value: .*/value: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/operator.yaml
@@ -314,6 +314,6 @@ jobs:
           git commit -am "Hazelcast-Operator is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
 
 
-      - name: Push artifacts to hazelcast-operator
+      - name: Push changes to hazelcast-operator
         working-directory: ./operator-repo
         run: git push
