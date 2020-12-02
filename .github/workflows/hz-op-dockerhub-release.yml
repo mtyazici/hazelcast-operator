@@ -287,6 +287,7 @@ jobs:
           docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
           docker push ${OPERATOR_IMAGE}
 
+
       - name: Update Hazelcast Versions in the Repo
         working-directory: ./hazelcast-repo
         run: |
