@@ -286,7 +286,7 @@ jobs:
         run: |
           docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
           docker tag ${OPERATOR_IMAGE} mtypey/test-op:1.0.0
-          docker push ${OPERATOR_IMAGE}
+          docker push mtypey/test-op:1.0.0
 
 
       - name: Update Hazelcast Versions in the Repo
