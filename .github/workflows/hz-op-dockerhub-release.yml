@@ -1,4 +1,4 @@
-name: hz-op-dockerhub-autorelease
+name: test-op
 on:
   workflow_dispatch:
     inputs:
@@ -298,6 +298,10 @@ jobs:
 
           sed -i "0,/tag: .*/s//tag: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
           sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+
+          linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/operator.yaml))
+          sed -i "${linesArray[2]}s/value: .*/value: ${DEFAULT_HAZELCAST_VERSION}/" operator.yaml
+          sed -i "${linesArray[4]}s/value: .*/value: ${DEFAULT_MANCENTER_VERSION}/" operator.yaml
 
 
       - name: Commit changes done to hazelcast-operator
