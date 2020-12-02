@@ -291,6 +291,7 @@ jobs:
       - name: Update Hazelcast Versions in the Repo
         working-directory: ./operator-repo
         run: |
+          OPERATOR_NAME=hazelcast-operator
           set -x 
           sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator.yaml
           sed -i "s/image: hazelcast\/${OPERATOR_NAME}:.*/image: hazelcast\/${OPERATOR_NAME}:${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator.yaml
