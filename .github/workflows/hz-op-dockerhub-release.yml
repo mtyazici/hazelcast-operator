@@ -292,7 +292,7 @@ jobs:
         working-directory: ./operator-repo
         run: |
           sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator.yaml
-          sed -i "s/image: hazelcast\/${OPERATOR_NAME}:.*/image: hazelcast\/${OPERATOR_NAME}:${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator.yaml
+          sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/operator.yaml
 
           sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
           sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
