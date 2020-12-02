@@ -152,7 +152,10 @@ jobs:
           sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
           sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
-
+          linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/operator.yaml))
+          sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/operator.yaml
+          sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/operator.yaml
+          
       - name: Upload updated Hazelcast-operator files for debugging
         uses: actions/upload-artifact@v2
         with:
@@ -301,8 +304,8 @@ jobs:
           sed -i "0,/tag: /! s/tag: .*/tag: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
 
           linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/operator.yaml))
-          sed -i "${linesArray[2]}s/value: .*/value: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/operator.yaml
-          sed -i "${linesArray[4]}s/value: .*/value: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/operator.yaml
+          sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/operator.yaml
+          sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/operator.yaml
 
 
       - name: Commit changes done to hazelcast-operator
