@@ -145,12 +145,12 @@ jobs:
         run: |
           cp -r ./operator-repo/${OPERATOR_NAME}  ./
 
+          sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+
           sed -i "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${OPERATOR_NAME}/operator.yaml
           sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator.yaml
           sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/operator.yaml
-
-          sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
-          sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
           linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/operator.yaml))
           sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/operator.yaml
@@ -230,6 +230,9 @@ jobs:
             fi
           done
 
+          #WAIT FOR MANAGEMENT CENTER
+          kubectl wait --for=condition=Ready --timeout=90s pod ${HZ_NAME}-${NAME}-mancenter-0
+
           #CHECK IF ALL MEMBERS CAN COMMUNICATE WITH MANAGEMENT CENTER
           for i in `seq 1 5`; do
             MEMBER_COUNT=$(kubectl logs ${HZ_NAME}-${NAME}-mancenter-0 | grep -E "Started communication with (a new )?member" | wc -l)
@@ -290,18 +293,17 @@ jobs:
           docker tag ${OPERATOR_IMAGE} mtypey/${OPERATOR_NAME}:${OPERATOR_VERSION}
           docker push mtypey/${OPERATOR_NAME}:${OPERATOR_VERSION}
 
-
       - name: Update Hazelcast Versions in the Repo
         working-directory: ./operator-repo
         run: |
-          sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator.yaml
-          sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/operator.yaml
-
           sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
           sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
           sed -i "0,/tag: .*/s//tag: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
           sed -i "0,/tag: /! s/tag: .*/tag: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
+
+          sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator.yaml
+          sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/operator.yaml
 
           linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/operator.yaml))
           sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/operator.yaml
