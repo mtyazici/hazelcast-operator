@@ -182,6 +182,11 @@ jobs:
           kubectl apply -f hazelcastcluster.crd.yaml
           kubectl --validate=false apply -f operator-docker-hub.yaml
 
+          #PUT LICENCE KEY IN secret.yaml
+          LICENSE_KEY=$(echo -n "${HZ_ENTERPRISE_LICENSE}" | base64 -w 0)
+          sed -i -e  "s/key: <base64-hz-license-key>/key: ${LICENSE_KEY}/g" ./secret.yaml
+          kubectl apply -f secret.yaml
+
           #WAIT FOR OPERATOR TO BE READY
           kubectl wait --for=condition=Ready --timeout=90s pod -l app.kubernetes.io/name=${OPERATOR_NAME}
 
