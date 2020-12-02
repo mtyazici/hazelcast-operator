@@ -308,6 +308,7 @@ jobs:
 
 
       - name: Commit changes done to hazelcast-operator
+        working-directory: ./operator-repo
         run: |
           git config --global user.name 'devOpsHazelcast'
           git config --global user.email 'devops@hazelcast.com'
@@ -316,4 +317,5 @@ jobs:
 
 
       - name: Push artifacts to hazelcast-operator
+        working-directory: ./operator-repo
         run: git push
