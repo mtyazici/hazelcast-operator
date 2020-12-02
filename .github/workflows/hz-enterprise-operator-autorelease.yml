@@ -1,4 +1,4 @@
-name: hz-enterprise-operator-dockerhub-autorelease
+name: test-ent
 on:
   workflow_dispatch:
     inputs:
@@ -42,18 +42,17 @@ jobs:
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
       HZ_ENTERPRISE_LICENSE: ${{ secrets.HZ_ENTERPRISE_LICENSE }}
 
+
     runs-on: ubuntu-latest
     steps: 
       - name: Check Docker 
         run: docker --version
-
 
       - name: Install Operator-Sdk
         run: |
           sudo curl -L -o /operator-sdk "https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk-${OPERATOR_SDK_VERSION}-x86_64-linux-gnu"
           sudo chmod +x /operator-sdk
           /operator-sdk version
-
 
       - name: Install oc
         run: |
@@ -63,14 +62,12 @@ jobs:
           sudo mv oc /oc
           /oc version
 
-
       - name: Checkout to hazelcast-operator
         uses: actions/checkout@v2
         with:
           path: operator-repo
       
-
-      - name: Download Hazelcast Helm Chart
+      - name: Download Hazelcast Enterprise Helm Chart
         run: |
           mkdir WORKDIR
           cd WORKDIR
@@ -83,7 +80,7 @@ jobs:
           rm ${NAME}-${HELM_CHART_VERSION}.tgz
       
 
-      - name: Overwrite template values
+      - name: Overwrite Helm-chart template files
         working-directory: ./WORKDIR
         run: |
           cat <<'EOF' > new_image_block
@@ -96,6 +93,7 @@ jobs:
           sed -i '/image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"/d' ${NAME}/templates/statefulset.yaml 2>/dev/null
           sed -i '/- name: {{ template "hazelcast.fullname" . }}/r new_image_block' ${NAME}/templates/statefulset.yaml 2>/dev/null
           rm new_image_block
+
           cat <<'EOF' > new_mc_image_block
                   {{- if and (.Values.mancenter.image.repository ) (.Values.mancenter.image.tag) }}
                   image: "{{ .Values.mancenter.image.repository }}:{{ .Values.mancenter.image.tag }}"
@@ -106,15 +104,16 @@ jobs:
           sed -i '/image: "{{ .Values.mancenter.image.repository }}:{{ .Values.mancenter.image.tag }}"/d' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
           sed -i '/- name: {{ template "mancenter.fullname" . }}/r new_mc_image_block' ${NAME}/templates/mancenter-statefulset.yaml 2>/dev/null
           rm new_mc_image_block
+
           sed -i 's/repository/repositoryOverride/g' ${NAME}/values.yaml 2>/dev/null
           sed -i 's/tag/tagOverride/g' ${NAME}/values.yaml 2>/dev/null
 
 
-      - name: Upload Helm Charts
+      - name: Upload updated Helm-Charts
         uses: actions/upload-artifact@v2
         with:
           name: updated-helm-charts
-          path: ./WORKDIR/hazelcast-enterprise
+          path: ./WORKDIR/hazelcast
 
 
       - name: Generate Operator and Operator Image
@@ -122,7 +121,7 @@ jobs:
         run: |
           OPERATOR_NAME="${NAME}-operator"
           OPERATOR_REPOSITORY="hazelcast/${OPERATOR_NAME}"
-          OPERATOR_IMAGE="${OPERATOR_REPOSITORY}:${OPERATOR_VERSION}"
+          OPERATOR_IMAGE="${OPERATOR_REPOSITORY}:${OPERATOR_VERSION}" 
 
           echo "OPERATOR_NAME=${OPERATOR_NAME}" >> $GITHUB_ENV
           echo "OPERATOR_REPOSITORY=${OPERATOR_REPOSITORY}" >> $GITHUB_ENV
@@ -137,29 +136,33 @@ jobs:
               mancenter.image.repositoryOverride: \${MC_IMAGE_REPOSITORY}
               mancenter.image.tagOverride: \${MC_IMAGE_TAG}
           EOL
+
           echo "Building the operator image ${OPERATOR_IMAGE}"
           /operator-sdk build ${OPERATOR_IMAGE}
 
-          sed -i -e "s|REPLACE_IMAGE|${OPERATOR_IMAGE}|g" ./deploy/operator.yaml
+          sed -i "s|REPLACE_IMAGE|${OPERATOR_IMAGE}|g" ./deploy/operator.yaml
 
 
-      - name: Update Hazelcast Enterprise Operator files
+      - name: Update Hazelcast-enterprise-operator files for testing
         run: |
           cp -r ./operator-repo/${OPERATOR_NAME}  ./
 
-          sed -i -e  "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${OPERATOR_NAME}/operator-docker-hub.yaml
-          sed -i -e  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-docker-hub.yaml
-          sed -i -e  "s/image: hazelcast\/${OPERATOR_NAME}:.*/image: hazelcast\/${OPERATOR_NAME}:${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-docker-hub.yaml
+          sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
-          sed -i -e "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
-          sed -i -e "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${OPERATOR_NAME}/operator-docker-hub.yaml
+          sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-docker-hub.yaml
+          sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/operator-docker-hub.yaml
 
-
-      - name: Upload Hazelcast-enterprise-operator files
+          linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/operator-docker-hub.yaml))
+          sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/operator-docker-hub.yaml
+          sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/operator-docker-hub.yaml
+          
+      - name: Upload updated Hazelcast-enterprise-operator files for debugging
         uses: actions/upload-artifact@v2
         with:
           name: hazelcast-operator
-          path: ./hazelcast-enterprise-operator
+          path: ./hazelcast-operator
 
 
       - name: Set up Kubernetes in Docker
@@ -179,16 +182,12 @@ jobs:
           kubectl apply -f hazelcastcluster.crd.yaml
           kubectl --validate=false apply -f operator-docker-hub.yaml
 
-          #PUT LICENCE KEY IN secret.yaml
-          LICENSE_KEY=$(echo -n "${HZ_ENTERPRISE_LICENSE}" | base64 -w 0)
-          sed -i -e  "s/key: <base64-hz-license-key>/key: ${LICENSE_KEY}/g" ./secret.yaml
-          kubectl apply -f secret.yaml
-          
           #WAIT FOR OPERATOR TO BE READY
           kubectl wait --for=condition=Ready --timeout=90s pod -l app.kubernetes.io/name=${OPERATOR_NAME}
 
           kubectl apply -f hazelcast.yaml
         
+
       - name: Print log of the Hazelcast-Enterprise-Operator
         run: |
           kubectl logs -l app.kubernetes.io/name=${OPERATOR_NAME}
@@ -224,7 +223,7 @@ jobs:
             else
               echo "Waiting for cluster size to be 3..." && sleep 4
               if [ "$i" = "5" ]; then
-                echo "Hazelcast cluster size is not 3!"
+                echo "Hazelcast Member size is not 3!"
                 kubectl get pods
                 echo ""
                 kubectl logs ${HZ_NAME}-${NAME}-2 
@@ -232,6 +231,9 @@ jobs:
               fi
             fi
           done
+
+          #WAIT FOR MANAGEMENT CENTER
+          kubectl wait --for=condition=Ready --timeout=90s pod ${HZ_NAME}-${NAME}-mancenter-0
 
           #CHECK IF ALL MEMBERS CAN COMMUNICATE WITH MANAGEMENT CENTER
           for i in `seq 1 5`; do
@@ -260,8 +262,6 @@ jobs:
       - name: Build Operatorhub Bundle
         working-directory: .
         run: |
-          RELEASE_DATE="$(date +%F)T11:59:59Z"
-
           mkdir operatorhub-bundle-output
           mkdir operatorhub-bundle-output/${OPERATOR_VERSION}
 
@@ -292,28 +292,35 @@ jobs:
       - name: Push to Dockerhub
         run: |
           docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
+          docker tag ${OPERATOR_IMAGE} mtypey/${OPERATOR_NAME}:${OPERATOR_VERSION}
           docker push ${OPERATOR_IMAGE}
 
-
       - name: Update Hazelcast Versions in the Repo
-        working-directory: ./hazelcast-repo
+        working-directory: ./operator-repo
         run: |
-          sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-docker-hub.yaml
-          sed -i "s/image: hazelcast\/${OPERATOR_NAME}:.*/image: hazelcast\/${OPERATOR_NAME}:${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-docker-hub.yaml
-
           sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
           sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
           sed -i "0,/tag: .*/s//tag: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
-          sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: /! s/tag: .*/tag: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
+
+          sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-docker-hub.yaml
+          sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/operator-docker-hub.yaml
+
+          linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/operator-docker-hub.yaml))
+          sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/operator-docker-hub.yaml
+          sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/operator-docker-hub.yaml
 
 
-      - name: Commit changes done to hazelcast-enterprise-operator
+      - name: Commit changes done to hazelcast-operator
+        working-directory: ./operator-repo
         run: |
           git config --global user.name 'devOpsHazelcast'
           git config --global user.email 'devops@hazelcast.com'
-          git commit -am "Hazelcast-Enterprise-Operator is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
+
+          git commit -am "Hazelcast-Operator is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
 
 
-      - name: Push changes done to hazelcast-enterprise-operator
+      - name: Push changes to hazelcast-operator
+        working-directory: ./operator-repo
         run: git push
