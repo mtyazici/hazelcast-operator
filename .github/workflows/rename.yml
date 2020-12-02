@@ -312,15 +312,15 @@ jobs:
           sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/operator-docker-hub.yaml
 
 
-      - name: Commit changes done to hazelcast-operator
+      - name: Commit changes done to hazelcast-enterprise-operator
         working-directory: ./operator-repo
         run: |
           git config --global user.name 'devOpsHazelcast'
           git config --global user.email 'devops@hazelcast.com'
 
-          git commit -am "Hazelcast-Operator is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
+          git commit -am "Hazelcast-Enterprise-Operator is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
 
 
-      - name: Push changes to hazelcast-operator
+      - name: Push changes to hazelcast-enterprise-operator
         working-directory: ./operator-repo
         run: git push
