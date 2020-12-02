@@ -36,7 +36,7 @@ spec:
   mancenter:
     image:
       repository: "hazelcast/management-center"
-      tag: 4.2020.10
+      tag: 4.2020.08
     enabled: true
     service:
       type: LoadBalancer
