@@ -335,8 +335,8 @@ jobs:
       - name: Create a PR for Operatorhub-bundle
         working-directory: community-operators
         run: |
-          REPO_OWNER=operator-framework
-          REPO_NAME=community-operators
+          #REPO_OWNER=operator-framework
+          #REPO_NAME=community-operators
 
           REPO_OWNER=mtyazici
           REPO_NAME=community-operators
