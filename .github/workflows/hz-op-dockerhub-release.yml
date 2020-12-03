@@ -1,4 +1,4 @@
-name: hz-op-dockerhub-autorelease
+name: test-final
 on:
   workflow_dispatch:
     inputs:
@@ -42,18 +42,20 @@ jobs:
       DEFAULT_MANCENTER_VERSION: ${{ github.event.inputs.DEFAULT_MANCENTER_VERSION }}
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-      HZ_ENTERPRISE_LICENSE: ${{ secrets.HAZELCAST_LICENSE}}
+      HZ_ENTERPRISE_LICENSE: ${{ secrets.HZ_ENTERPRISE_LICENSE}}
 
     runs-on: ubuntu-latest
     steps: 
       - name: Check Docker 
         run: docker --version
 
+
       - name: Install Operator-Sdk
         run: |
           sudo curl -L -o /operator-sdk "https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk-${OPERATOR_SDK_VERSION}-x86_64-linux-gnu"
           sudo chmod +x /operator-sdk
           /operator-sdk version
+
 
       - name: Install oc
         run: |
@@ -63,11 +65,13 @@ jobs:
           sudo mv oc /oc
           /oc version
 
-      - name: Checkout to hazelcast-operator
+
+      - name: Checkout to Hazelcast-Operator
         uses: actions/checkout@v2
         with:
           path: operator-repo
       
+
       - name: Download Hazelcast Helm Chart
         run: |
           mkdir WORKDIR
@@ -131,12 +135,13 @@ jobs:
           else
             echo "Wrong input type for name, it can be 'hazelcast' or 'hazelcast-enterprise'"
             exit 1
+          fi
 
           echo "KIND=${KIND}" >> $GITHUB_ENV
           echo "OPERATOR_YAML_NAME=${OPERATOR_YAML_NAME}" >> $GITHUB_ENV
 
 
-      - name: Generate Operator and Operator Image
+      - name: Generate Operator and Operator image
         working-directory: ./WORKDIR
         run: |
           OPERATOR_NAME="${NAME}-operator"
@@ -163,7 +168,7 @@ jobs:
           sed -i "s|REPLACE_IMAGE|${OPERATOR_IMAGE}|g" ./deploy/operator.yaml
 
 
-      - name: Update Hazelcast-operator files for testing
+      - name: Update Hazelcast-Operator files for testing
         run: |
           cp -r ./operator-repo/${OPERATOR_NAME}  ./
 
@@ -181,6 +186,7 @@ jobs:
           #FOR UPLOADING ARTIFACTS
           cp -r ./${OPERATOR_NAME} ./artifact-hazelcast-operator
           
+
       - name: Upload updated Hazelcast-operator files for debugging
         uses: actions/upload-artifact@v2
         with:
@@ -212,6 +218,7 @@ jobs:
             LICENSE_KEY=$(echo -n "${HZ_ENTERPRISE_LICENSE}" | base64 -w 0)
             sed -i  "s/key: <base64-hz-license-key>/key: ${LICENSE_KEY}/g" ./secret.yaml
             kubectl apply -f secret.yaml
+          fi
 
           kubectl apply -f hazelcast.yaml
         
@@ -238,12 +245,12 @@ jobs:
           verify_management_center $CLUSTER_SIZE
 
 
-      - name: Copy Operatorhub-bundle From the Repo
+      - name: Copy Operatorhub bundle from the repo
         run: |
           cp -r ./operator-repo/.github/operator-release-files/operatorhub-bundle ./
 
 
-      - name: Build Operatorhub Bundle
+      - name: Build Operatorhub bundle
         working-directory: .
         run: |
           mkdir operatorhub-bundle-output
@@ -266,7 +273,7 @@ jobs:
           sed -i "s/OPERATOR_VERSION/${OPERATOR_VERSION}/g" ${OPERATOR_NAME}.package.yaml
 
 
-      - name: Upload Operatorhub Bundle
+      - name: Upload Operatorhub bundle
         uses: actions/upload-artifact@v2
         with:
           name: operator-hub-bundle
@@ -278,7 +285,8 @@ jobs:
           docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
           docker push ${OPERATOR_IMAGE}
 
-      - name: Update Hazelcast Versions in the Repo
+
+      - name: Update Hazelcast versions in the repo
         working-directory: ./operator-repo
         run: |
           sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
@@ -295,15 +303,22 @@ jobs:
           sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
 
 
-      - name: Commit changes done to Hazelcast-operator
+      - name: Commit changes done to Hazelcast-Operator
         working-directory: ./operator-repo
         run: |
           git config --global user.name 'devOpsHazelcast'
           git config --global user.email 'devops@hazelcast.com'
 
+          git checkout -b ${OPERATOR_NAME}-file-updates-$
+
           git commit -am "${OPERATOR_NAME} is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
 
 
-      - name: Push changes to Hazelcast-operator
+      - name: Create a PR for changes
         working-directory: ./operator-repo
-        run: git push
+        run: |
+          echo ${{ github.token }} | gh auth login --with-token
+          git push -u origin ${OPERATOR_NAME}-file-updates
+          gh pr create \
+              --title "Update image tags after release of ${OPERATOR_IMAGE}" \
+              --body "Released ${OPERATOR_IMAGE} on Docker-Hub. This PR updates the image tags to new ones. "
