@@ -49,11 +49,13 @@ jobs:
       - name: Check Docker 
         run: docker --version
 
+
       - name: Install Operator-Sdk
         run: |
           sudo curl -L -o /operator-sdk "https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}/operator-sdk-${OPERATOR_SDK_VERSION}-x86_64-linux-gnu"
           sudo chmod +x /operator-sdk
           /operator-sdk version
+
 
       - name: Install oc
         run: |
@@ -63,11 +65,13 @@ jobs:
           sudo mv oc /oc
           /oc version
 
-      - name: Checkout to hazelcast-operator
+
+      - name: Checkout to Hazelcast-Operator
         uses: actions/checkout@v2
         with:
           path: operator-repo
       
+
       - name: Download Hazelcast Helm Chart
         run: |
           mkdir WORKDIR
@@ -120,7 +124,7 @@ jobs:
           path: ./WORKDIR/artifact-helm-charts
 
 
-      - name: Set KIND and OPERATOR_YAML_NAME an environment variable
+      - name: Set KIND and OPERATOR_YAML_NAME as environment variables
         run: |
           if [ "${NAME}" = "hazelcast" ]; then
             KIND=Hazelcast
@@ -137,7 +141,7 @@ jobs:
           echo "OPERATOR_YAML_NAME=${OPERATOR_YAML_NAME}" >> $GITHUB_ENV
 
 
-      - name: Generate Operator and Operator Image
+      - name: Generate Operator and Operator image
         working-directory: ./WORKDIR
         run: |
           OPERATOR_NAME="${NAME}-operator"
@@ -164,7 +168,7 @@ jobs:
           sed -i "s|REPLACE_IMAGE|${OPERATOR_IMAGE}|g" ./deploy/operator.yaml
 
 
-      - name: Update Hazelcast-operator files for testing
+      - name: Update Hazelcast-Operator files for testing
         run: |
           cp -r ./operator-repo/${OPERATOR_NAME}  ./
 
@@ -182,6 +186,7 @@ jobs:
           #FOR UPLOADING ARTIFACTS
           cp -r ./${OPERATOR_NAME} ./artifact-hazelcast-operator
           
+
       - name: Upload updated Hazelcast-operator files for debugging
         uses: actions/upload-artifact@v2
         with:
@@ -195,7 +200,7 @@ jobs:
           version: "v0.7.0"
 
 
-      - name: Deploy Hazelcast Cluster
+      - name: Deploy Hazelcast cluster
         run: |
           cd ./${OPERATOR_NAME}
 
@@ -223,7 +228,7 @@ jobs:
           kubectl logs -l app.kubernetes.io/name=${OPERATOR_NAME}
 
 
-      - name: Validate Cluster Size
+      - name: Validate cluster size
         run: |
           HZ_NAME=$(grep -m 1 -Po "name: \K.+" ./${OPERATOR_NAME}/hazelcast.yaml)
           CLUSTER_SIZE=3
@@ -240,12 +245,12 @@ jobs:
           verify_management_center $CLUSTER_SIZE
 
 
-      - name: Copy operatorhub-bundle from the repo
+      - name: Copy Operatorhub bundle from the repo
         run: |
           cp -r ./operator-repo/.github/operator-release-files/operatorhub-bundle ./
 
 
-      - name: Build Operatorhub Bundle
+      - name: Build Operatorhub bundle
         working-directory: .
         run: |
           mkdir operatorhub-bundle-output
@@ -268,7 +273,7 @@ jobs:
           sed -i "s/OPERATOR_VERSION/${OPERATOR_VERSION}/g" ${OPERATOR_NAME}.package.yaml
 
 
-      - name: Upload Operatorhub Bundle
+      - name: Upload Operatorhub bundle
         uses: actions/upload-artifact@v2
         with:
           name: operator-hub-bundle
@@ -281,7 +286,8 @@ jobs:
           docker tag ${OPERATOR_IMAGE} mtypey/${NAME}:${OPERATOR_VERSION}
           docker push mtypey/${NAME}:${OPERATOR_VERSION}
 
-      - name: Update Hazelcast Versions in the Repo
+
+      - name: Update Hazelcast versions in the repo
         working-directory: ./operator-repo
         run: |
           sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
@@ -298,7 +304,7 @@ jobs:
           sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
 
 
-      - name: Commit changes done to hazelcast-operator
+      - name: Commit changes done to Hazelcast-Operator
         working-directory: ./operator-repo
         run: |
           git config --global user.name 'devOpsHazelcast'
@@ -309,7 +315,7 @@ jobs:
           git commit -am "${OPERATOR_NAME} is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
 
 
-      - name: Push changes to hazelcast-operator
+      - name: Create a PR for changes
         working-directory: ./operator-repo
         run: |
           echo ${{ github.token }} | gh auth login --with-token
