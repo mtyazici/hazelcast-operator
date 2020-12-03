@@ -304,9 +304,16 @@ jobs:
           git config --global user.name 'devOpsHazelcast'
           git config --global user.email 'devops@hazelcast.com'
 
+          git checkout -b ${OPERATOR_NAME}-file-updates
+
           git commit -am "${OPERATOR_NAME} is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
 
 
       - name: Push changes to hazelcast-operator
         working-directory: ./operator-repo
-        run: git push
+        run: |
+          echo ${{ github.token }} | gh auth login --with-token
+          git push -u origin ${OPERATOR_NAME}-file-updates
+          gh pr create \
+              --title "Release ${NAME} version {OPERATOR_VERSION}" \
+              --body "Released ${NAME} version ${OPERATOR_VERSION} on Docker-Hub. This PR updates the image tags to current ones. "
