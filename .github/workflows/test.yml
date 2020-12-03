@@ -42,7 +42,7 @@ jobs:
       DEFAULT_MANCENTER_VERSION: ${{ github.event.inputs.DEFAULT_MANCENTER_VERSION }}
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-      HZ_ENTERPRISE_LICENSE: ${{ secrets.HAZELCAST_LICENSE}}
+      HZ_ENTERPRISE_LICENSE: ${{ secrets.HZ_ENTERPRISE_LICENSE}}
 
     runs-on: ubuntu-latest
     steps: 
@@ -122,6 +122,7 @@ jobs:
 
       - name: Set KIND and OPERATOR_YAML_NAME an environment variable
         run: |
+          set -x
           if [ "${NAME}" = "hazelcast" ]; then
             KIND=Hazelcast
             OPERATOR_YAML_NAME=operator
