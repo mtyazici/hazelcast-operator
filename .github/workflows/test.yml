@@ -354,6 +354,7 @@ jobs:
           echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
 
           gh pr create  \
-              --fill \ 
+              --title "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" \
+              --body  "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" \
               --repo $REPO_OWNER/$REPO_NAME
 
