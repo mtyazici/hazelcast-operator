@@ -122,7 +122,6 @@ jobs:
 
       - name: Set KIND and OPERATOR_YAML_NAME an environment variable
         run: |
-          set -x
           if [ "${NAME}" = "hazelcast" ]; then
             KIND=Hazelcast
             OPERATOR_YAML_NAME=operator
@@ -132,6 +131,7 @@ jobs:
           else
             echo "Wrong input type for name, it can be 'hazelcast' or 'hazelcast-enterprise'"
             exit 1
+          fi
 
           echo "KIND=${KIND}" >> $GITHUB_ENV
           echo "OPERATOR_YAML_NAME=${OPERATOR_YAML_NAME}" >> $GITHUB_ENV
