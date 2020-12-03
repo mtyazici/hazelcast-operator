@@ -2,6 +2,10 @@ name: hz-op-dockerhub-autorelease
 on:
   workflow_dispatch:
     inputs:
+      NAME:
+        description: 'NAME'     
+        required: true
+        default: 'hazelcast-enterprise'
       OPERATOR_VERSION:
         description: 'OPERATOR_VERSION'     
         required: true
@@ -30,9 +34,7 @@ jobs:
         shell: bash
     env:
       OPERATOR_SDK_VERSION: "v0.17.2"
-      KIND: "Hazelcast"
-      NAME: "hazelcast"
-      REPO: "docker-hub"
+      NAME: ${{ github.event.inputs.NAME }}
       OPERATOR_VERSION: ${{ github.event.inputs.OPERATOR_VERSION }}
       PREVIOUS_OPERATOR_VERSION: ${{ github.event.inputs.PREVIOUS_OPERATOR_VERSION }}
       HELM_CHART_VERSION: ${{ github.event.inputs.HELM_CHART_VERSION }}
@@ -40,6 +42,7 @@ jobs:
       DEFAULT_MANCENTER_VERSION: ${{ github.event.inputs.DEFAULT_MANCENTER_VERSION }}
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+      HZ_ENTERPRISE_LICENSE: ${{ secrets.HAZELCAST_LICENSE}}
 
     runs-on: ubuntu-latest
     steps: 
@@ -106,12 +109,31 @@ jobs:
           sed -i 's/repository/repositoryOverride/g' ${NAME}/values.yaml 2>/dev/null
           sed -i 's/tag/tagOverride/g' ${NAME}/values.yaml 2>/dev/null
 
+          #FOR UPLOADING ARTIFACT
+          cp -r ./${NAME} ./artifact-helm-charts 
+
 
       - name: Upload updated Helm-Charts
         uses: actions/upload-artifact@v2
         with:
           name: updated-helm-charts
-          path: ./WORKDIR/hazelcast
+          path: ./WORKDIR/artifact-helm-charts
+
+
+      - name: Set KIND and OPERATOR_YAML_NAME an environment variable
+        run: |
+          if [ "${NAME}" = "hazelcast" ]; then
+            KIND=Hazelcast
+            OPERATOR_YAML_NAME=operator
+          elif [ "${NAME}" = "hazelcast-enterprise" ]; then
+            KIND=HazelcastEnterprise
+            OPERATOR_YAML_NAME=operator-docker-hub
+          else
+            echo "Wrong input type for name, it can be 'hazelcast' or 'hazelcast-enterprise'"
+            exit 1
+
+          echo "KIND=${KIND}" >> $GITHUB_ENV
+          echo "OPERATOR_YAML_NAME=${OPERATOR_YAML_NAME}" >> $GITHUB_ENV
 
 
       - name: Generate Operator and Operator Image
@@ -148,19 +170,22 @@ jobs:
           sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
           sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
-          sed -i "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${OPERATOR_NAME}/operator.yaml
-          sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator.yaml
-          sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/operator.yaml
+          sed -i "s/imagePullPolicy: .*/imagePullPolicy: Never/g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
+          sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
+          sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
 
-          linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/operator.yaml))
-          sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/operator.yaml
-          sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/operator.yaml
+          linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml))
+          sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
+          sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
+
+          #FOR UPLOADING ARTIFACTS
+          cp -r ./${OPERATOR_NAME} ./artifact-hazelcast-operator
           
       - name: Upload updated Hazelcast-operator files for debugging
         uses: actions/upload-artifact@v2
         with:
           name: hazelcast-operator
-          path: ./hazelcast-operator
+          path: ./artifact-hazelcast-operator
 
 
       - name: Set up Kubernetes in Docker
@@ -178,10 +203,15 @@ jobs:
           kubectl apply -f operator-rbac.yaml
           kubectl apply -f hazelcast-rbac.yaml
           kubectl apply -f hazelcastcluster.crd.yaml
-          kubectl --validate=false apply -f operator.yaml
+          kubectl --validate=false apply -f ${OPERATOR_YAML_NAME}.yaml
 
           #WAIT FOR OPERATOR TO BE READY
           kubectl wait --for=condition=Ready --timeout=90s pod -l app.kubernetes.io/name=${OPERATOR_NAME}
+
+          if [ "${NAME}" = "hazelcast-enterprise" ]; then
+            LICENSE_KEY=$(echo -n "${HZ_ENTERPRISE_LICENSE}" | base64 -w 0)
+            sed -i  "s/key: <base64-hz-license-key>/key: ${LICENSE_KEY}/g" ./secret.yaml
+            kubectl apply -f secret.yaml
 
           kubectl apply -f hazelcast.yaml
         
@@ -194,62 +224,18 @@ jobs:
       - name: Validate Cluster Size
         run: |
           HZ_NAME=$(grep -m 1 -Po "name: \K.+" ./${OPERATOR_NAME}/hazelcast.yaml)
-          
-          #WAIT FOR hz-hazelcast-2 TO BE READY
-          for i in `seq 1 10`; do
-            if [[ $(kubectl get pods ${HZ_NAME}-${NAME}-2 -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; then
-              echo "waiting for pod ${HZ_NAME}-${NAME}-2 to be ready..." && sleep 15
-              if [ "$i" = "10" ]; then
-                echo "${HZ_NAME}-${NAME}-2 pod failed to be ready!"
-                kubectl get pods
-                echo ""
-                kubectl logs ${HZ_NAME}-${NAME}-2
-                exit 1
-              fi
-            else
-              echo "${HZ_NAME}-${NAME}-2 is ready!"
-              break
-            fi
-          done
+          CLUSTER_SIZE=3
 
-          #WAIT FOR CLUSTER SIZE TO BE 3
-          for i in `seq 1 5`; do
-            num=$(kubectl logs ${HZ_NAME}-${NAME}-2 | grep "Members {size:3, ver:3}" | wc -l)
-            if [ "$num" = "1" ]; then
-              echo "Hazelcast cluster size is 3!"
-              break
-            else
-              echo "Waiting for cluster size to be 3..." && sleep 4
-              if [ "$i" = "5" ]; then
-                echo "Hazelcast Member size is not 3!"
-                kubectl get pods
-                echo ""
-                kubectl logs ${HZ_NAME}-${NAME}-2 
-                exit 1 
-              fi
-            fi
-          done
+          source ./operator-repo/.github/cluster-verification.sh
+
+          wait_for_last_member_initialization $CLUSTER_SIZE
+
+          verify_cluster_size $CLUSTER_SIZE
 
           #WAIT FOR MANAGEMENT CENTER
           kubectl wait --for=condition=Ready --timeout=90s pod ${HZ_NAME}-${NAME}-mancenter-0
 
-          #CHECK IF ALL MEMBERS CAN COMMUNICATE WITH MANAGEMENT CENTER
-          for i in `seq 1 5`; do
-            MEMBER_COUNT=$(kubectl logs ${HZ_NAME}-${NAME}-mancenter-0 | grep -E "Started communication with (a new )?member" | wc -l)
-            if [ "$MEMBER_COUNT" = "3" ]; then
-              echo "Management Center monitoring 3 members!"
-              break
-            else
-              echo "Waiting for management center to find all 3 members..." && sleep 4
-              if [ "$i" = "5" ]; then
-                echo "Management center could not find all 3 members!"
-                kubectl get pods
-                echo ""
-                kubectl logs ${HZ_NAME}-${NAME}-mancenter-0
-                exit 1 
-              fi
-            fi
-          done
+          verify_management_center $CLUSTER_SIZE
 
 
       - name: Copy operatorhub-bundle from the repo
@@ -301,12 +287,12 @@ jobs:
           sed -i "0,/tag: .*/s//tag: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
           sed -i "0,/tag: /! s/tag: .*/tag: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/hazelcast-full.yaml
 
-          sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator.yaml
-          sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/operator.yaml
+          sed -i "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
+          sed -i "s|image: hazelcast/${OPERATOR_NAME}:.*|image: hazelcast/${OPERATOR_NAME}:${OPERATOR_VERSION}|g" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
 
-          linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/operator.yaml))
-          sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/operator.yaml
-          sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/operator.yaml
+          linesArray=($(sed -n  "/value: .*/=" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml))
+          sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
+          sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
 
 
       - name: Commit changes done to hazelcast-operator
@@ -315,7 +301,7 @@ jobs:
           git config --global user.name 'devOpsHazelcast'
           git config --global user.email 'devops@hazelcast.com'
 
-          git commit -am "Hazelcast-Operator is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
+          git commit -am "${OPERATOR_NAME} is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
 
 
       - name: Push changes to hazelcast-operator
