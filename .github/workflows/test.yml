@@ -315,5 +315,5 @@ jobs:
           echo ${{ github.token }} | gh auth login --with-token
           git push -u origin ${OPERATOR_NAME}-file-updates
           gh pr create \
-              --title "Release ${NAME} version {OPERATOR_VERSION}" \
-              --body "Released ${NAME} version ${OPERATOR_VERSION} on Docker-Hub. This PR updates the image tags to current ones. "
+              --title "Update image tags after release of ${OPERATOR_IMAGE}" \
+              --body "Released ${OPERATOR_IMAGE} on Docker-Hub. This PR updates the image tags to new ones. "

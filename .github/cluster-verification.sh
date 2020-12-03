@@ -30,7 +30,7 @@ verify_cluster_size() {
         num=$(kubectl logs ${HZ_NAME}-${NAME}-${LAST_MEMBER} | grep "Members {size:${SIZE}, ver:${SIZE}}" | wc -l)
         if [ "$num" = "1" ]; then
             echo "Hazelcast cluster size is ${SIZE}!"
-            break
+            return 0
         else
             echo "Waiting for cluster size to be ${SIZE}..." && sleep 4
             if [ "$i" = "5" ]; then
@@ -38,7 +38,7 @@ verify_cluster_size() {
             kubectl get pods
             echo ""
             kubectl logs ${HZ_NAME}-${NAME}-${LAST_MEMBER} 
-            exit 1 
+            return 1 
             fi
         fi
     done
@@ -52,7 +52,7 @@ verify_management_center() {
         local MEMBER_COUNT=$(kubectl logs ${HZ_NAME}-${NAME}-mancenter-0 | grep -E "Started communication with (a new )?member" | wc -l)
         if [ "$MEMBER_COUNT" = "${SIZE}" ]; then
             echo "Management Center monitoring ${SIZE} members!"
-            break
+            return 0
         else
             echo "Waiting for management center to find all ${SIZE} members..." && sleep 4
             if [ "$i" = "5" ]; then
@@ -60,7 +60,7 @@ verify_management_center() {
             kubectl get pods
             echo ""
             kubectl logs ${HZ_NAME}-${NAME}-mancenter-0
-            exit 1 
+            return 1 
             fi
         fi  
     done
