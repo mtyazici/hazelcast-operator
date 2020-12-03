@@ -213,7 +213,8 @@ jobs:
             LICENSE_KEY=$(echo -n "${HZ_ENTERPRISE_LICENSE}" | base64 -w 0)
             sed -i  "s/key: <base64-hz-license-key>/key: ${LICENSE_KEY}/g" ./secret.yaml
             kubectl apply -f secret.yaml
-
+          fi
+          
           kubectl apply -f hazelcast.yaml
         
 
