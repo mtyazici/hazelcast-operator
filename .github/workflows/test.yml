@@ -282,7 +282,7 @@ jobs:
 
       - name: Push to Dockerhub
         run: |
-          docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
+          echo ${DOCKERHUB_PASSWORD} | docker login -u ${DOCKERHUB_USERNAME}
           docker tag ${OPERATOR_IMAGE} mtypey/${NAME}:${OPERATOR_VERSION}
           docker push mtypey/${NAME}:${OPERATOR_VERSION}
 
@@ -310,7 +310,7 @@ jobs:
           git config --global user.name 'devOpsHazelcast'
           git config --global user.email 'devops@hazelcast.com'
 
-          git checkout -b ${OPERATOR_NAME}-file-updates
+          git checkout -b ${OPERATOR_NAME}-file-updates-${{ github.run_id }}
 
           git commit -am "${OPERATOR_NAME} is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
 
@@ -319,7 +319,7 @@ jobs:
         working-directory: ./operator-repo
         run: |
           echo ${{ github.token }} | gh auth login --with-token
-          git push -u origin ${OPERATOR_NAME}-file-updates
+          git push -u origin ${OPERATOR_NAME}-file-updates-${{ github.run_id }}
           gh pr create \
               --title "Update image tags after release of ${OPERATOR_IMAGE}" \
               --body "Released ${OPERATOR_IMAGE} on Docker-Hub. This PR updates the image tags to new ones. "
