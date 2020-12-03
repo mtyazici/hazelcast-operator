@@ -43,7 +43,6 @@ jobs:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
       HZ_ENTERPRISE_LICENSE: ${{ secrets.HZ_ENTERPRISE_LICENSE }}
-      DEVOPS_GITHUB_TOKEN: ${{ secrets.DEVOPS_GITHUB_TOKEN }}
     runs-on: ubuntu-latest
     steps: 
       - name: Check Docker 
