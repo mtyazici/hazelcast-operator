@@ -347,7 +347,7 @@ jobs:
 
           git add  ./upstream-community-operators/${OPERATOR_NAME}
 
-          git commit -m "Update ${OPERATOR_IMAGE} to ${OPERATOR_VERSION}"
+          git commit -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}"
 
           git push -u origin ${OPERATOR_NAME}-update-${OPERATOR_VERSION}-${{ github.run_id }}
 
