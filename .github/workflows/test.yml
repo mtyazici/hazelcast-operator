@@ -341,7 +341,7 @@ jobs:
           REPO_OWNER=mtyazici
           REPO_NAME=community-operators
 
-          git checkout -b ${OPERATOR_NAME}-update-${OPERATOR_VERSION}
+          git checkout -b ${OPERATOR_NAME}-update-${OPERATOR_VERSION}-${{ github.run_id }}
 
           cp -r ../operatorhub-bundle-output/* ./upstream-community-operators/${OPERATOR_NAME}/
 
@@ -349,11 +349,11 @@ jobs:
 
           git commit -m "Update ${OPERATOR_IMAGE} to ${OPERATOR_VERSION}"
 
-          git push -u origin ${OPERATOR_NAME}-update-${OPERATOR_VERSION}
+          git push -u origin ${OPERATOR_NAME}-update-${OPERATOR_VERSION}-${{ github.run_id }}
 
           echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
 
           gh pr create  \
-              --fill
+              --fill \ 
               --repo $REPO_OWNER/$REPO_NAME
 
