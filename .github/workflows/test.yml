@@ -278,8 +278,8 @@ jobs:
       - name: Push to Dockerhub
         run: |
           docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
-          docker tag ${OPERATOR_IMAGE} mtypey/${OPERATOR_IMAGE}
-          docker push mtypey/${OPERATOR_IMAGE}
+          docker tag ${OPERATOR_IMAGE} mtypey/${NAME}:${OPERATOR_VERSION}
+          docker push mtypey/${NAME}:${OPERATOR_VERSION}
 
       - name: Update Hazelcast Versions in the Repo
         working-directory: ./operator-repo
