@@ -275,18 +275,17 @@ jobs:
       - name: Upload Operatorhub bundle
         uses: actions/upload-artifact@v2
         with:
-          name: operator-hub-bundle
+          name: operatorhub-bundle
           path: ./operatorhub-bundle-output
 
 
-      - name: Push to Dockerhub
+      - name: Push Hazelcast-Operator to Dockerhub
         run: |
           docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
-          docker tag ${OPERATOR_IMAGE} mtypey/${NAME}:${OPERATOR_VERSION}
-          docker push mtypey/${NAME}:${OPERATOR_VERSION}
+          docker push ${OPERATOR_IMAGE}
 
 
-      - name: Update Hazelcast versions in the repo
+      - name: Update Hazelcast versions in the repo Hazelcast-Operator
         working-directory: ./operator-repo
         run: |
           sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
@@ -313,12 +312,13 @@ jobs:
 
           git commit -am "${OPERATOR_NAME} is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
 
+          git push -u origin ${OPERATOR_NAME}-file-updates-${{ github.run_id }}
 
-      - name: Create a PR for changes
+      - name: Create a PR for changes in Hazelcast-Operator
         working-directory: ./operator-repo
         run: |
           echo ${{ github.token }} | gh auth login --with-token
-          git push -u origin ${OPERATOR_NAME}-file-updates-${{ github.run_id }}
+          
           gh pr create \
               --title "Update image tags after release of ${OPERATOR_IMAGE}" \
               --body "Released ${OPERATOR_IMAGE} on Docker-Hub. This PR updates the image tags to new ones. "
@@ -335,10 +335,7 @@ jobs:
       - name: Create a PR for Operatorhub-bundle
         working-directory: community-operators
         run: |
-          #REPO_OWNER=operator-framework
-          #REPO_NAME=community-operators
-
-          REPO_OWNER=mtyazici
+          REPO_OWNER=operator-framework
           REPO_NAME=community-operators
 
           git checkout -b ${OPERATOR_NAME}-update-${OPERATOR_VERSION}-${{ github.run_id }}
