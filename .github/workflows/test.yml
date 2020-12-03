@@ -42,8 +42,8 @@ jobs:
       DEFAULT_MANCENTER_VERSION: ${{ github.event.inputs.DEFAULT_MANCENTER_VERSION }}
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-      HZ_ENTERPRISE_LICENSE: ${{ secrets.HZ_ENTERPRISE_LICENSE}}
-
+      HZ_ENTERPRISE_LICENSE: ${{ secrets.HZ_ENTERPRISE_LICENSE }}
+      DEVOPS_GITHUB_TOKEN: ${{ secrets.DEVOPS_GITHUB_TOKEN }}
     runs-on: ubuntu-latest
     steps: 
       - name: Check Docker 
@@ -323,3 +323,38 @@ jobs:
           gh pr create \
               --title "Update image tags after release of ${OPERATOR_IMAGE}" \
               --body "Released ${OPERATOR_IMAGE} on Docker-Hub. This PR updates the image tags to new ones. "
+
+
+      - name: Checkout to devOpsHelm/community-operators
+        uses: actions/checkout@v2
+        with:
+          repository: devOpsHelm/community-operators
+          path: community-operators
+          token: ${{ secrets.DEVOPS_GITHUB_TOKEN }}
+
+          
+      - name: Create a PR for Operatorhub-bundle
+        working-directory: community-operators
+        run: |
+          REPO_OWNER=operator-framework
+          REPO_NAME=community-operators
+
+          REPO_OWNER=mtyazici
+          REPO_NAME=community-operators
+
+          git checkout -b ${OPERATOR_NAME}-update-${OPERATOR_VERSION}
+
+          cp -r ../operatorhub-bundle-output/* ./upstream-community-operators/${OPERATOR_NAME}/
+
+          git add  ./upstream-community-operators/${OPERATOR_NAME}
+
+          git commit -m "Update ${OPERATOR_IMAGE} to ${OPERATOR_VERSION}"
+
+          git push -u origin ${OPERATOR_NAME}-update-${OPERATOR_VERSION}
+
+          echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
+
+          gh pr create  \
+              --fill
+              --repo $REPO_OWNER/$REPO_NAME
+
