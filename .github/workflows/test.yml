@@ -238,7 +238,6 @@ jobs:
 
           verify_cluster_size $CLUSTER_SIZE
 
-          #WAIT FOR MANAGEMENT CENTER
           kubectl wait --for=condition=Ready --timeout=90s pod ${HZ_NAME}-${NAME}-mancenter-0
 
           verify_management_center $CLUSTER_SIZE
@@ -282,7 +281,8 @@ jobs:
       - name: Push Hazelcast-Operator to Dockerhub
         run: |
           docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
-          docker push ${OPERATOR_IMAGE}
+          docker tag ${OPERATOR_IMAGE} mtypey/${OPERATOR_NAME}:${OPERATOR_VERSION}
+          docker push mtypey/${OPERATOR_NAME}:${OPERATOR_VERSION}
 
 
       - name: Update Hazelcast versions in the repo Hazelcast-Operator
@@ -314,11 +314,12 @@ jobs:
 
           git push -u origin ${OPERATOR_NAME}-file-updates-${{ github.run_id }}
 
+
       - name: Create a PR for changes in Hazelcast-Operator
         working-directory: ./operator-repo
         run: |
           echo ${{ github.token }} | gh auth login --with-token
-          
+
           gh pr create \
               --title "Update image tags after release of ${OPERATOR_IMAGE}" \
               --body "Released ${OPERATOR_IMAGE} on Docker-Hub. This PR updates the image tags to new ones. "
