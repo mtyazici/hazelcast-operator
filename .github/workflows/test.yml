@@ -303,11 +303,8 @@ jobs:
 
       - name: Install GPG and import the Key
         run: |
-          sudo apt-get update
-          sudo apt-get -y install gnupg
-
           mkdir -p ~/.gnupg/
-          echo ${{ secrets.GPG_SIGNING_KEY }} | ~/.gnupg/private.key
+          printf "${{ secrets.GPG_SIGNING_KEY }}" | ~/.gnupg/private.key
           echo ${{ secrets.GPG_PASSPHRASE }} | gpg --batch --import ~/.gnupg/private.key
 
       - name: Commit changes done to Hazelcast-Operator
