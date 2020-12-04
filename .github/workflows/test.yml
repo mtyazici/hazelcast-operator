@@ -305,7 +305,7 @@ jobs:
         run: |
           mkdir -p ~/.gnupg/
           printf "${{ secrets.GPG_SIGNING_KEY }}" | base64 --decode >  ~/.gnupg/private.key
-          echo ${{ secrets.GPG_PASSPHRASE }} | gpg --batch --import ~/.gnupg/private.key
+          gpg --batch --import ~/.gnupg/private.key
 
       - name: Commit changes done to Hazelcast-Operator
         working-directory: ./operator-repo
