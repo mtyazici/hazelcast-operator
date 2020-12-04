@@ -301,16 +301,25 @@ jobs:
           sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
           sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
 
+      - name: Install GPG and import the Key
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install gnupg
+
+          mkdir -p ~/.gnupg/
+          echo ${{ secrets.GPG_SIGNING_KEY }} | ~/.gnupg/private.key
+          echo ${{ secrets.GPG_PASSPHRASE }} | gpg --batch --import ~/.gnupg/private.key
 
       - name: Commit changes done to Hazelcast-Operator
         working-directory: ./operator-repo
         run: |
-          git config --global user.name 'devOpsHazelcast'
-          git config --global user.email 'devops@hazelcast.com'
+          git config --global user.name 'devOpsHelm'
+          git config --global user.email 'devops+1@hazelcast.com'
+          git config --global user.signingkey ${{ secrets.GPG_KEY_ID }}
 
           git checkout -b ${OPERATOR_NAME}-file-updates-${{ github.run_id }}
 
-          git commit -am "${OPERATOR_NAME} is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
+          git commit -S -am "${OPERATOR_NAME} is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
 
           git push -u origin ${OPERATOR_NAME}-file-updates-${{ github.run_id }}
 
@@ -345,14 +354,13 @@ jobs:
 
           git add  ./upstream-community-operators/${OPERATOR_NAME}
 
-          git commit -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}"
+          git commit -S -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}"
 
           git push -u origin ${OPERATOR_NAME}-update-${OPERATOR_VERSION}-${{ github.run_id }}
 
           echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
 
           gh pr create  \
-              --title "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" \
-              --body  "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" \
+              --fill \
               --repo $REPO_OWNER/$REPO_NAME
 
