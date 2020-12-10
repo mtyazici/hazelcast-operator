@@ -53,7 +53,8 @@ wait_for_container_build_or_scan()
         echo "Building or scanning in progress, waiting..."
         sleep 120
         if [ "$i" = "10" ]; then
-
+            echo "Timeout! Scan could not be finished"
+            return 42
         fi
     done
 }
@@ -75,15 +76,15 @@ publish_the_image()
     # Result message
     if [ "${STATUS}" == "OK" ]; then
         echo "Done."
-        exit 0
+        return 0
     else
         ERROR=$(echo "${RESPONSE}" | jq -r '.data.errors[0]')
         if [[ "${ERROR}" == 'Container image is already published'* ]]; then
             echo "Image is already published. Skipped."
-            exit 0
+            return 0
         else
             echo "Error, result message: ${RESPONSE}"
-            exit 42
+            return 42
         fi
     fi
 }
