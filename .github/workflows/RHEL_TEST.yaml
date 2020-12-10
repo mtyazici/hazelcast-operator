@@ -5,11 +5,11 @@ on:
       OPERATOR_VERSION:
         description: 'OPERATOR_VERSION'     
         required: true
-        default: '0.3.3'
+        default: '0.3.4'
       PREVIOUS_OPERATOR_VERSION:
         description: 'PREVIOUS_OPERATOR_VERSION'     
         required: true
-        default: '0.3.2' 
+        default: '0.3.3' 
       HELM_CHART_VERSION:
         description: 'HELM_CHART_VERSION'     
         required: true
@@ -17,11 +17,11 @@ on:
       DEFAULT_HAZELCAST_VERSION:
         description: 'DEFAULT_HAZELCAST_VERSION'     
         required: true
-        default: '4.0.3'
+        default: '4.1'
       DEFAULT_MANCENTER_VERSION:
         description: 'DEFAULT_MANCENTER_VERSION'     
         required: true
-        default: '4.2020.08'
+        default: '4.2020.10'
 
 jobs:
   build:
@@ -220,7 +220,7 @@ jobs:
       - name: Deploy Hazelcast Cluster
         run: |
           WORKDIR=./${OPERATOR_NAME}
-          ./operator-repo/.github/scripts/smoketest.sh \
+          ./operator-repo/.github/scripts/smoke-test.sh \
                         "$WORKDIR"  \
                         "$PROJECT"  \
                         "$HZ_ENTERPRISE_LICENSE" \
