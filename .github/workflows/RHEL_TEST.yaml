@@ -217,6 +217,15 @@ jobs:
           docker push ${RHEL_IMAGE}
 
 
+      - name: Wait for Scan to Complete
+        run: |
+          PROJECT_ID=$( echo ${RHEL_REPOSITORY} | grep -m 1 -Po "/\K.+(?=/)" )
+          VERSION=${OPERATOR_VERSION}
+          source ./operator-repo/.github/publish-rhel.sh
+
+          wait_for_container_build_or_scan
+        
+          
       - name: Deploy Hazelcast Cluster
         run: |
           WORKDIR=./${OPERATOR_NAME}
@@ -229,7 +238,7 @@ jobs:
                         "$OCP_CLUSTER_URL" \
                         "$RHEL_REPO_PASSWORD" \
                         "$CLUSTER_SIZE" \
-                        "$MANCENTER_SIZE" \
+                        "$MANCENTER_SIZE" 
         env:
           PROJECT: operator-rhel-release-test
           CLUSTER_SIZE: 3
@@ -322,13 +331,13 @@ jobs:
       - name: Publish the Hazelcast-Enterprise-Operator image
         run: |
           # PROJECT_ID=$( echo ${RHEL_REPOSITORY} | grep -m 1 -Po "/\K.+(?=/)" )
-          # ../operator-repo/.github/publish.rhel.sh ${RHEL_API_KEY} ${PROJECT_ID} ${OPERATOR_VERSION}
+          # ./operator-repo/.github/publish-rhel.sh ${RHEL_API_KEY} ${PROJECT_ID} ${OPERATOR_VERSION}
 
 
       - name: Publish Operator-Bundle image
         run: |
           # BUNDLE_PROJECT_ID=$( echo ${RHEL_BUNDLE_REPOSITORY} | grep -m 1 -Po "/\K.+(?=/)" )
-          # ./operator-repo/.github/publish.rhel.sh ${RHEL_API_KEY} ${BUNDLE_PROJECT_ID} ${OPERATOR_VERSION}
+          # ./operator-repo/.github/publish-rhel.sh ${RHEL_API_KEY} ${BUNDLE_PROJECT_ID} ${OPERATOR_VERSION}
           
 
       - name: Update Hazelcast Versions in the Repo
