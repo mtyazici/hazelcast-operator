@@ -42,6 +42,8 @@ is_build_valid()
 
 wait_for_container_build_or_scan()
 {
+    TIMEOUT_IN_MINS=$1
+    NOF_RETRIES=$(( $TIMEOUT_IN_MINS / 120 ))
     # Wait until the image is built and scanned
     for i in `seq 1 10`; do
         BUILD=$(get_container_build "${PROJECT_ID}" "${VERSION}" ${RHEL_API_KEY})
@@ -52,7 +54,7 @@ wait_for_container_build_or_scan()
         fi
         echo "Building or scanning in progress, waiting..."
         sleep 120
-        if [ "$i" = "10" ]; then
+        if [ "$i" = "$NOF_RETRIES" ]; then
             echo "Timeout! Scan could not be finished"
             return 42
         fi

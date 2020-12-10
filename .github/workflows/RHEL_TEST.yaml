@@ -22,6 +22,10 @@ on:
         description: 'DEFAULT_MANCENTER_VERSION'     
         required: true
         default: '4.2020.10'
+      TIMEOUT_IN_MINS:
+        description: 'TIMEOUT_IN_MINS'     
+        required: true
+        default: '60'
 
 jobs:
   build:
@@ -39,6 +43,7 @@ jobs:
       HELM_CHART_VERSION: ${{ github.event.inputs.HELM_CHART_VERSION }}
       DEFAULT_HAZELCAST_VERSION: ${{ github.event.inputs.DEFAULT_HAZELCAST_VERSION }}
       DEFAULT_MANCENTER_VERSION: ${{ github.event.inputs.DEFAULT_MANCENTER_VERSION }}
+      TIMEOUT_IN_MINS: ${{ github.event.inputs.TIMEOUT_IN_MINS }}
       HZ_ENTERPRISE_LICENSE: ${{ secrets.HZ_ENTERPRISE_LICENSE }}
       REDHAT_LOGIN_USERNAME: ${{ secrets.REDHAT_LOGIN_USERNAME }}
       REDHAT_LOGIN_PASSWORD: ${{ secrets.REDHAT_LOGIN_PASSWORD }}
@@ -223,7 +228,7 @@ jobs:
           VERSION=${OPERATOR_VERSION}
           source ./operator-repo/.github/scripts/publish-rhel.sh
 
-          wait_for_container_build_or_scan
+          wait_for_container_build_or_scan $TIMEOUT_IN_MINS
         
           
       - name: Deploy Hazelcast Cluster
@@ -331,13 +336,20 @@ jobs:
       - name: Publish the Hazelcast-Enterprise-Operator image
         run: |
           # PROJECT_ID=$( echo ${RHEL_REPOSITORY} | grep -m 1 -Po "/\K.+(?=/)" )
-          # ./operator-repo/.github/publish-rhel.sh ${RHEL_API_KEY} ${PROJECT_ID} ${OPERATOR_VERSION}
+          # VERSION=${OPERATOR_VERSION}
+          # source ./operator-repo/.github/scripts/publish-rhel.sh
+
+          # publish_the_image
 
 
       - name: Publish Operator-Bundle image
         run: |
-          # BUNDLE_PROJECT_ID=$( echo ${RHEL_BUNDLE_REPOSITORY} | grep -m 1 -Po "/\K.+(?=/)" )
-          # ./operator-repo/.github/publish-rhel.sh ${RHEL_API_KEY} ${BUNDLE_PROJECT_ID} ${OPERATOR_VERSION}
+          # PROJECT_ID=$( echo ${RHEL_BUNDLE_REPOSITORY} | grep -m 1 -Po "/\K.+(?=/)" )
+          # VERSION=${OPERATOR_VERSION}
+          # source ./operator-repo/.github/scripts/publish-rhel.sh
+
+          # wait_for_container_build_or_scan TIMEOUT_IN_MINS
+          # publish_the_image
           
 
       - name: Update Hazelcast Versions in the Repo
