@@ -186,11 +186,11 @@ jobs:
         run: |
           cp -r ./operator-repo/${OPERATOR_NAME}  ./
 
-          sed -i "0,/tag: .*/s//tag: ${DEFAULT_HAZELCAST_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/tag: .*/s__tag: ${DEFAULT_HAZELCAST_VERSION}_" ./${OPERATOR_NAME}/hazelcast.yaml
           sed -i "0,/tag: /! s/tag: .*/tag: ${DEFAULT_MANCENTER_VERSION}/" ./${OPERATOR_NAME}/hazelcast.yaml
 
-          sed -i "0,|repository: .*|s||repository: ${RHEL_HAZELCAST_REPO}|" ./${OPERATOR_NAME}/hazelcast.yaml
-          sed -i "0,|repository: |! s|repository: .*|repository: ${RHEL_MANCENTER_REPO}|" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/repository: .*/s||repository: ${RHEL_HAZELCAST_REPO}|" ./${OPERATOR_NAME}/hazelcast.yaml
+          sed -i "0,/repository: /! s|repository: .*|repository: ${RHEL_MANCENTER_REPO}|" ./${OPERATOR_NAME}/hazelcast.yaml
 
           sed -i  "s|image: .*|image: ${RHEL_IMAGE}|" ./${OPERATOR_NAME}/operator-rhel.yaml
           sed -i  "s/productVersion: .*/productVersion: ${OPERATOR_VERSION}/g" ./${OPERATOR_NAME}/operator-rhel.yaml
@@ -346,7 +346,7 @@ jobs:
         env: 
           REGISTRY_NAME: registry.connect.redhat.com/hazelcast
 
-          
+
       - name: Commit changes done to Hazelcast-Operator
         working-directory: ./operator-repo
         run: |
