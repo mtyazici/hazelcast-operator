@@ -221,7 +221,7 @@ jobs:
         run: |
           PROJECT_ID=$( echo ${RHEL_REPOSITORY} | grep -m 1 -Po "/\K.+(?=/)" )
           VERSION=${OPERATOR_VERSION}
-          source ./operator-repo/.github/publish-rhel.sh
+          source ./operator-repo/.github/scripts/publish-rhel.sh
 
           wait_for_container_build_or_scan
         
