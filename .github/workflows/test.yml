@@ -301,22 +301,16 @@ jobs:
           sed -i "${linesArray[2]}s/value: .*/value: \"${DEFAULT_HAZELCAST_VERSION}\"/" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
           sed -i "${linesArray[4]}s/value: .*/value: \"${DEFAULT_MANCENTER_VERSION}\"/" ./${OPERATOR_NAME}/${OPERATOR_YAML_NAME}.yaml
 
-      - name: Install GPG and import the Key
-        run: |
-          mkdir -p ~/.gnupg/
-          printf "${{ secrets.GPG_SIGNING_KEY }}" | base64 --decode >  ~/.gnupg/private.key
-          gpg --batch --import ~/.gnupg/private.key
 
       - name: Commit changes done to Hazelcast-Operator
         working-directory: ./operator-repo
         run: |
           git config --global user.name 'devOpsHelm'
           git config --global user.email 'devops+1@hazelcast.com'
-          git config --global user.signingkey ${{ secrets.GPG_KEY_ID }}
 
           git checkout -b ${OPERATOR_NAME}-file-updates-${{ github.run_id }}
 
-          git commit -S -am "${OPERATOR_NAME} is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
+          git commit --signoff -am "${OPERATOR_NAME} is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
 
           git push -u origin ${OPERATOR_NAME}-file-updates-${{ github.run_id }}
 
@@ -342,7 +336,7 @@ jobs:
       - name: Create a PR for Operatorhub-bundle
         working-directory: community-operators
         run: |
-          REPO_OWNER=operator-framework
+          REPO_OWNER=mtyazici
           REPO_NAME=community-operators
 
           git checkout -b ${OPERATOR_NAME}-update-${OPERATOR_VERSION}-${{ github.run_id }}
@@ -351,7 +345,7 @@ jobs:
 
           git add  ./upstream-community-operators/${OPERATOR_NAME}
 
-          git commit -S -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}"
+          git commit --signoff -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}"
 
           git push -u origin ${OPERATOR_NAME}-update-${OPERATOR_VERSION}-${{ github.run_id }}
 
