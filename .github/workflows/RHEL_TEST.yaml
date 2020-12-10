@@ -214,7 +214,7 @@ jobs:
         run: |
           docker login ${SCAN_REGISTRY} -u unused -p ${RHEL_REPO_PASSWORD}
           docker tag ${OPERATOR_IMAGE} ${RHEL_IMAGE}
-          docker push ${OPERATOR_IMAGE}
+          docker push ${RHEL_IMAGE}
 
 
       - name: Deploy Hazelcast Cluster
