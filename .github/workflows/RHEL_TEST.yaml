@@ -346,6 +346,7 @@ jobs:
         env: 
           REGISTRY_NAME: registry.connect.redhat.com/hazelcast
 
+          
       - name: Commit changes done to Hazelcast-Operator
         working-directory: ./operator-repo
         run: |
