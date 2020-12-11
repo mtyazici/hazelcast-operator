@@ -359,7 +359,7 @@ jobs:
 
 
       - name: Create a PR for Operatorhub-bundle, path community-operators
-        if: ${{ env.NAME == "hazelcast" }}
+        if: ${{ env.NAME }} == "hazelcast"
         working-directory: community-operators
         run: |
           REPO_OWNER=mtyazici
