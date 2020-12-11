@@ -346,6 +346,8 @@ jobs:
           export REPO_OWNER=mtyazici
           export REPO_NAME=community-operators
 
+          DEFAULT_BRRANCH=$(git branch --show-current)
+
           git checkout -b ${OPERATOR_NAME}-upstream-${OPERATOR_VERSION}-${{ github.run_id }}
 
           cp -r ../operatorhub-bundle-output/* ./upstream-community-operators/${OPERATOR_NAME}/
@@ -359,6 +361,8 @@ jobs:
           echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
 
           ../operator-repo/.github/scripts/expect.sh
+
+          git checkout $DEFAULT_BRRANCH
 
 
       - name: Create a PR for Operatorhub-bundle, path community-operators
