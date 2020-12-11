@@ -233,6 +233,7 @@ jobs:
           
       - name: Deploy Hazelcast Cluster
         run: |
+          set -x
           WORKDIR=./${OPERATOR_NAME}
           ./operator-repo/.github/scripts/smoke-test.sh \
                         "$WORKDIR"  \
