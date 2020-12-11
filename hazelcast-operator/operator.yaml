@@ -20,7 +20,7 @@ spec:
       annotations:
         productID: hazelcast-operator
         productName: Hazelcast Operator
-        productVersion: 0.3.3
+        productVersion: 9.9.9
     spec:
       serviceAccountName: hazelcast-operator
       securityContext:
@@ -38,7 +38,7 @@ spec:
                 - amd64
       containers:
         - name: hazelcast-operator
-          image: hazelcast/hazelcast-operator:0.3.3
+          image: hazelcast/hazelcast-operator:9.9.9
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
@@ -58,7 +58,7 @@ spec:
             - name: MC_IMAGE_REPOSITORY
               value: hazelcast/management-center
             - name: MC_IMAGE_TAG
-              value: "4.2020.08"
+              value: "4.2020.10"
           resources:
             limits:
               cpu: "0.1"
