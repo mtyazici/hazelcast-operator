@@ -358,7 +358,7 @@ jobs:
 
           echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
 
-          ./operator-repo/.github/scripts/expect.sh
+          ../operator-repo/.github/scripts/expect.sh
 
 
       - name: Create a PR for Operatorhub-bundle, path community-operators
@@ -380,4 +380,4 @@ jobs:
 
           echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
 
-          ./operator-repo/.github/scripts/expect.sh
+          ../operator-repo/.github/scripts/expect.sh
