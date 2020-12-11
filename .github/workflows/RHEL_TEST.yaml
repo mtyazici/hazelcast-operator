@@ -239,8 +239,8 @@ jobs:
                         "$WORKDIR"  \
                         "$PROJECT"  \
                         "$HZ_ENTERPRISE_LICENSE" \
-                        "$LOGIN_USERNAME" \
-                        "$LOGIN_PASSWORD" \
+                        "$REDHAT_LOGIN_USERNAME" \
+                        "$REDHAT_LOGIN_PASSWORD" \
                         "$OCP_CLUSTER_URL" \
                         "$RHEL_REPO_PASSWORD" \
                         "$CLUSTER_SIZE" \
