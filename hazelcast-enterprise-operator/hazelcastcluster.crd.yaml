@@ -14,7 +14,7 @@ spec:
     plural: hazelcastenterprises
     singular: hazelcastenterprise
   scope: Namespaced
-versions:
+  versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
