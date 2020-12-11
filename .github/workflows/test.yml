@@ -9,11 +9,11 @@ on:
       OPERATOR_VERSION:
         description: 'OPERATOR_VERSION'     
         required: true
-        default: '0.3.3'
+        default: '0.3.4'
       PREVIOUS_OPERATOR_VERSION:
         description: 'PREVIOUS_OPERATOR_VERSION'     
         required: true
-        default: '0.3.2' 
+        default: '0.3.3' 
       HELM_CHART_VERSION:
         description: 'HELM_CHART_VERSION'     
         required: true
@@ -21,11 +21,11 @@ on:
       DEFAULT_HAZELCAST_VERSION:
         description: 'DEFAULT_HAZELCAST_VERSION'     
         required: true
-        default: '4.0.3'
+        default: '4.1'
       DEFAULT_MANCENTER_VERSION:
         description: 'DEFAULT_MANCENTER_VERSION'     
         required: true
-        default: '4.2020.08'
+        default: '4.2020.10'
 
 jobs:
   build:
@@ -232,7 +232,7 @@ jobs:
           HZ_NAME=$(grep -m 1 -Po "name: \K.+" ./${OPERATOR_NAME}/hazelcast.yaml)
           CLUSTER_SIZE=3
 
-          source ./operator-repo/.github/cluster-verification.sh
+          source ./operator-repo/.github/scripts/cluster-verification.sh
 
           wait_for_last_member_initialization $CLUSTER_SIZE
 
@@ -314,6 +314,7 @@ jobs:
 
           git push -u origin ${OPERATOR_NAME}-file-updates-${{ github.run_id }}
 
+          git commit --signoff -am "${OPERATOR_NAME} is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
 
       - name: Create a PR for changes in Hazelcast-Operator
         working-directory: ./operator-repo
@@ -333,13 +334,13 @@ jobs:
           token: ${{ secrets.DEVOPS_GITHUB_TOKEN }}
 
           
-      - name: Create a PR for Operatorhub-bundle
+      - name: Create a PR for Operatorhub-bundle, path upstream-community-operators
         working-directory: community-operators
         run: |
           REPO_OWNER=mtyazici
           REPO_NAME=community-operators
 
-          git checkout -b ${OPERATOR_NAME}-update-${OPERATOR_VERSION}-${{ github.run_id }}
+          git checkout -b ${OPERATOR_NAME}-upstream-${OPERATOR_VERSION}-${{ github.run_id }}
 
           cp -r ../operatorhub-bundle-output/* ./upstream-community-operators/${OPERATOR_NAME}/
 
@@ -347,11 +348,36 @@ jobs:
 
           git commit --signoff -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}"
 
-          git push -u origin ${OPERATOR_NAME}-update-${OPERATOR_VERSION}-${{ github.run_id }}
+          git push -u origin ${OPERATOR_NAME}-upstream-${OPERATOR_VERSION}-${{ github.run_id }}
 
           echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
 
           gh pr create  \
-              --fill \
+              --title "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" \
+              --body  "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" \
               --repo $REPO_OWNER/$REPO_NAME
 
+
+      - name: Create a PR for Operatorhub-bundle, path community-operators
+        if: ${{ env.NAME == "hazelcast" }}
+        working-directory: community-operators
+        run: |
+          REPO_OWNER=mtyazici
+          REPO_NAME=community-operators
+
+          git checkout -b ${OPERATOR_NAME}-community-${OPERATOR_VERSION}-${{ github.run_id }}
+
+          cp -r ../operatorhub-bundle-output/* ./community-operators/${OPERATOR_NAME}/
+
+          git add  ./community-operators/${OPERATOR_NAME}
+
+          git commit --signoff -m "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}"
+
+          git push -u origin ${OPERATOR_NAME}-community-${OPERATOR_VERSION}-${{ github.run_id }}
+
+          echo ${{ secrets.DEVOPS_GITHUB_TOKEN }} | gh auth login --with-token
+
+          gh pr create  \
+              --title "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" \
+              --body  "Update ${OPERATOR_NAME} to ${OPERATOR_VERSION}" \
+              --repo $REPO_OWNER/$REPO_NAME
