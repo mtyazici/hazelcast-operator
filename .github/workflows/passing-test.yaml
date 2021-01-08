@@ -377,3 +377,4 @@ jobs:
           gh pr create \
               --title "Update versions after release of RHEL ${OPERATOR_IMAGE}" \
               --body "Released ${OPERATOR_IMAGE} on RHEL. New operator and operator-bundle images are released on RHEL registry. "
+              
