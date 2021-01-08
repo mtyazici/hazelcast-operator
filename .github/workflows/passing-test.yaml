@@ -1,4 +1,4 @@
-name: RHEL_TEST
+name: passing-test
 on:
   workflow_dispatch:
     inputs:
