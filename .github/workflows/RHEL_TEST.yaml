@@ -161,7 +161,7 @@ jobs:
 
           cp -r ../operator-repo/.github/operator-release-files/licenses ./
 
-          cat >> /Dockerfile <<EOL
+          cat >> Dockerfile <<EOL
           LABEL name="Hazelcast-Enterprise Operator" \\
                 maintainer="info@hazelcast.com" \\
                 vendor="Hazelcast, Inc." \\
