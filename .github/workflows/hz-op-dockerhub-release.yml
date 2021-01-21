@@ -372,13 +372,18 @@ jobs:
     name: Slack
     needs: build 
     runs-on: ubuntu-latest
-    if: needs.build.result != 'success'
+    defaults:
+      run:
+        shell: bash
+    # if: needs.build.result != 'success'
     steps:
-      - uses: 8398a7/action-slack@v3
-        with:
-          fields: repo,commit,author,action,eventName,workflow
-          status: ${{ needs.build.result }}
-          channel: '#github-actions-log'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      - run: |
+          echo ${{ needs.build.result }}
+      # - uses: 8398a7/action-slack@v3
+      #   with:
+      #     fields: repo,commit,author,action,eventName,workflow
+      #     status: ${{ needs.build.result }}
+      #     channel: '#github-actions-log'
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
