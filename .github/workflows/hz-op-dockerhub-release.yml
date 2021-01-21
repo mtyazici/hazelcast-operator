@@ -370,9 +370,9 @@ jobs:
 
   slack_notify:
     name: Slack
-    needs: build # set needs only last job except this job
+    needs: build 
     runs-on: ubuntu-latest
-    if: always() # set always
+    if:  ${{ needs.build.result != "success "}}
     steps:
       - uses: 8398a7/action-slack@v3
         with:
