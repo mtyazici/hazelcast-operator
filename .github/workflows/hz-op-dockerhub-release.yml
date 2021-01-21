@@ -375,7 +375,7 @@ jobs:
     defaults:
       run:
         shell: bash
-    # if: needs.build.result != 'success'
+    if: always()
     steps:
       - run: |
           echo ${{ needs.build.result }}
