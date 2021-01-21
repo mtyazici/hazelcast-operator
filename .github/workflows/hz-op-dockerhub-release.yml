@@ -372,13 +372,8 @@ jobs:
     name: Slack
     needs: build 
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
     if: always()
     steps:
-      - run: |
-          echo ${{ needs.build.result }}
       - uses: 8398a7/action-slack@v3
         if: needs.build.result != 'success'
         with:
