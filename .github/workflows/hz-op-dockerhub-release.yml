@@ -378,7 +378,7 @@ jobs:
         with:
           fields: repo,commit,author,action,eventName,workflow
           status: ${{ needs.build.result }}
+          channel: '#github-actions-log'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: env.WORKFLOW_CONCLUSION == 'failure' # notify only if failure
