@@ -375,15 +375,16 @@ jobs:
     defaults:
       run:
         shell: bash
-    if: needs.build.result != 'success'
+    if: always()
     steps:
       - run: |
           echo ${{ needs.build.result }}
-      # - uses: 8398a7/action-slack@v3
-      #   with:
-      #     fields: repo,commit,author,action,eventName,workflow
-      #     status: ${{ needs.build.result }}
-      #     channel: '#github-actions-log'
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      - uses: 8398a7/action-slack@v3
+        if: needs.build.result != 'success'
+        with:
+          fields: repo,commit,author,action,eventName,workflow
+          status: ${{ needs.build.result }}
+          channel: '#github-actions-log'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
