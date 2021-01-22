@@ -128,48 +128,48 @@ jobs:
       #     path: ./WORKDIR/hazelcast-enterprise
 
 
-      # - name: Generate Operator and Operator Image
-      #   working-directory: ./WORKDIR
-      #   run: |
-      #     OPERATOR_NAME="${NAME}-operator"
-      #     OPERATOR_REPOSITORY="hazelcast/${OPERATOR_NAME}"
-      #     OPERATOR_IMAGE="${OPERATOR_REPOSITORY}:${OPERATOR_VERSION}"
-      #     RHEL_IMAGE=${RHEL_REPOSITORY}:${OPERATOR_VERSION}
-      #     RHEL_BUNDLE_IMAGE=${RHEL_BUNDLE_REPOSITORY}:${OPERATOR_VERSION}
+      - name: Generate Operator and Operator Image
+        working-directory: ./WORKDIR
+        run: |
+          OPERATOR_NAME="${NAME}-operator"
+          OPERATOR_REPOSITORY="hazelcast/${OPERATOR_NAME}"
+          OPERATOR_IMAGE="${OPERATOR_REPOSITORY}:${OPERATOR_VERSION}"
+          RHEL_IMAGE=${RHEL_REPOSITORY}:${OPERATOR_VERSION}
+          RHEL_BUNDLE_IMAGE=${RHEL_BUNDLE_REPOSITORY}:${OPERATOR_VERSION}
 
-      #     echo "OPERATOR_NAME=${OPERATOR_NAME}" >> $GITHUB_ENV
-      #     echo "OPERATOR_REPOSITORY=${OPERATOR_REPOSITORY}" >> $GITHUB_ENV
-      #     echo "OPERATOR_IMAGE=${OPERATOR_IMAGE}" >> $GITHUB_ENV
-      #     echo "RHEL_IMAGE=${RHEL_IMAGE}" >> $GITHUB_ENV
-      #     echo "RHEL_BUNDLE_IMAGE=${RHEL_BUNDLE_IMAGE}" >> $GITHUB_ENV
+          echo "OPERATOR_NAME=${OPERATOR_NAME}" >> $GITHUB_ENV
+          echo "OPERATOR_REPOSITORY=${OPERATOR_REPOSITORY}" >> $GITHUB_ENV
+          echo "OPERATOR_IMAGE=${OPERATOR_IMAGE}" >> $GITHUB_ENV
+          echo "RHEL_IMAGE=${RHEL_IMAGE}" >> $GITHUB_ENV
+          echo "RHEL_BUNDLE_IMAGE=${RHEL_BUNDLE_IMAGE}" >> $GITHUB_ENV
 
-      #     /operator-sdk init --plugins=helm --domain=''
-      #     /operator-sdk create api version=v1alpha1 --group=hazelcast.com --crd-version=v1 --kind=${KIND} --helm-chart=$(pwd)/${NAME}
+          # /operator-sdk init --plugins=helm --domain=''
+          # /operator-sdk create api version=v1alpha1 --group=hazelcast.com --crd-version=v1 --kind=${KIND} --helm-chart=$(pwd)/${NAME}
 
-      #     cat >> watches.yaml <<EOL
-      #       overrideValues:
-      #         image.repositoryOverride: \${HAZELCAST_IMAGE_REPOSITORY}
-      #         image.tagOverride: \${HAZELCAST_IMAGE_TAG}
-      #         mancenter.image.repositoryOverride: \${MC_IMAGE_REPOSITORY}
-      #         mancenter.image.tagOverride: \${MC_IMAGE_TAG}
-      #     EOL
+          # cat >> watches.yaml <<EOL
+          #   overrideValues:
+          #     image.repositoryOverride: \${HAZELCAST_IMAGE_REPOSITORY}
+          #     image.tagOverride: \${HAZELCAST_IMAGE_TAG}
+          #     mancenter.image.repositoryOverride: \${MC_IMAGE_REPOSITORY}
+          #     mancenter.image.tagOverride: \${MC_IMAGE_TAG}
+          # EOL
 
-      #     cp -r ../operator-repo/.github/operator-release-files/licenses ./
+          # cp -r ../operator-repo/.github/operator-release-files/licenses ./
 
-      #     cat >> Dockerfile <<EOL
-      #     LABEL name="Hazelcast-Enterprise Operator" \\
-      #           maintainer="info@hazelcast.com" \\
-      #           vendor="Hazelcast, Inc." \\
-      #           version="${OPERATOR_VERSION}" \\
-      #           release="v1" \\
-      #           summary="Hazelcast Enterprise Operator" \\
-      #           description="Helm App Operator for Hazelcast"
+          # cat >> Dockerfile <<EOL
+          # LABEL name="Hazelcast-Enterprise Operator" \\
+          #       maintainer="info@hazelcast.com" \\
+          #       vendor="Hazelcast, Inc." \\
+          #       version="${OPERATOR_VERSION}" \\
+          #       release="v1" \\
+          #       summary="Hazelcast Enterprise Operator" \\
+          #       description="Helm App Operator for Hazelcast"
 
-      #     ADD licenses /licenses
-      #     EOL
+          # ADD licenses /licenses
+          # EOL
 
-      #     echo "Building the operator image ${OPERATOR_IMAGE}"
-      #     make docker-build  IMG=${OPERATOR_IMAGE}
+          # echo "Building the operator image ${OPERATOR_IMAGE}"
+          # make docker-build  IMG=${OPERATOR_IMAGE}
 
 
       # - name: Update Hazelcast Enterprise Operator files
