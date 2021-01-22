@@ -80,17 +80,17 @@ jobs:
           path: operator-repo
 
 
-      # - name: Download Hazelcast Helm Chart
-      #   run: |
-      #     mkdir WORKDIR
-      #     cd WORKDIR
-      #     if [ $(wget -q "https://hazelcast-charts.s3.amazonaws.com/${NAME}-${HELM_CHART_VERSION}.tgz" ; echo $? = "0") ]; then 
-      #       echo "${NAME}-${HELM_CHART_VERSION} chart is downloaded!" 
-      #     else 
-      #       echo "${NAME}-${HELM_CHART_VERSION} chart could not be downloaded!" 
-      #     fi 
-      #     tar xf ${NAME}-${HELM_CHART_VERSION}.tgz
-      #     rm ${NAME}-${HELM_CHART_VERSION}.tgz
+      - name: Download Hazelcast Helm Chart
+        run: |
+          mkdir WORKDIR
+          # cd WORKDIR
+          # if [ $(wget -q "https://hazelcast-charts.s3.amazonaws.com/${NAME}-${HELM_CHART_VERSION}.tgz" ; echo $? = "0") ]; then 
+          #   echo "${NAME}-${HELM_CHART_VERSION} chart is downloaded!" 
+          # else 
+          #   echo "${NAME}-${HELM_CHART_VERSION} chart could not be downloaded!" 
+          # fi 
+          # tar xf ${NAME}-${HELM_CHART_VERSION}.tgz
+          # rm ${NAME}-${HELM_CHART_VERSION}.tgz
       
 
       # - name: Overwrite template values
