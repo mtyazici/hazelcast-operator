@@ -271,10 +271,10 @@ jobs:
           path: ./operatorhub-bundle-output
 
 
-      - name: Push Hazelcast-Operator to Dockerhub
-        run: |
-          docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
-          docker push ${OPERATOR_IMAGE}
+      # - name: Push Hazelcast-Operator to Dockerhub
+      #   run: |
+      #     docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
+      #     docker push ${OPERATOR_IMAGE}
 
 
       - name: Update Hazelcast versions in the repo Hazelcast-Operator
@@ -328,7 +328,7 @@ jobs:
       - name: Create a PR for Operatorhub-bundle, path upstream-community-operators
         working-directory: community-operators
         run: |
-          export REPO_OWNER=operator-framework
+          export REPO_OWNER=mtyazici
           export REPO_NAME=community-operators
 
           git checkout -b ${OPERATOR_NAME}-upstream-${OPERATOR_VERSION}-${{ github.run_id }}
@@ -350,7 +350,7 @@ jobs:
         if: env.NAME != 'hazelcast-enterprise'
         working-directory: community-operators
         run: |
-          export REPO_OWNER=operator-framework
+          export REPO_OWNER=mtyazici
           export REPO_NAME=community-operators
 
           git checkout -b ${OPERATOR_NAME}-community-${OPERATOR_VERSION}-${{ github.run_id }}
