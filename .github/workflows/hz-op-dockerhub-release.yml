@@ -353,6 +353,7 @@ jobs:
           export REPO_OWNER=mtyazici
           export REPO_NAME=community-operators
 
+          git checkout master
           git checkout -b ${OPERATOR_NAME}-community-${OPERATOR_VERSION}-${{ github.run_id }}
 
           cp -r ../operatorhub-bundle-output/* ./community-operators/${OPERATOR_NAME}/
