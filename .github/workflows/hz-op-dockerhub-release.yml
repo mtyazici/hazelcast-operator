@@ -232,8 +232,10 @@ jobs:
           wait_for_last_member_initialization $CLUSTER_SIZE
 
           verify_cluster_size $CLUSTER_SIZE
+          kubectl logs ${HZ_NAME}-${NAME}-2
 
           kubectl wait --for=condition=Ready --timeout=120s pod ${HZ_NAME}-${NAME}-mancenter-0
+          kubectl logs ${HZ_NAME}-${NAME}-mancenter-0
 
           verify_management_center $CLUSTER_SIZE
 
@@ -276,7 +278,7 @@ jobs:
       - name: Push Hazelcast-Operator to Dockerhub
         run: |
           docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
-          docker tag {OPERATOR_IMAGE} mtypey/${OPERATOR_NAME}:${OPERATOR_VERSION}
+          docker tag ${OPERATOR_IMAGE} mtypey/${OPERATOR_NAME}:${OPERATOR_VERSION}
           docker push ${OPERATOR_IMAGE}
 
 
