@@ -302,11 +302,13 @@ jobs:
         working-directory: ./operator-repo
         run: |
           git config --global user.name 'devOpsHelm'
-          git config --global user.email 'devops+1@hazelcast.com'
+          git config --global user.email 'devops+1@hazelcast.com' 
+          git branch
 
           git checkout -b ${OPERATOR_NAME}-file-updates-${{ github.run_id }}
-
-          git commit --signoff -am "${OPERATOR_NAME} is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
+          git add .
+          git status
+          git commit --signoff -m "${OPERATOR_NAME} is updated to version: ${OPERATOR_VERSION}. New image is released on Docker-Hub."
 
           git push -u origin ${OPERATOR_NAME}-file-updates-${{ github.run_id }}
 
