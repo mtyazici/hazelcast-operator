@@ -45,7 +45,7 @@ oc apply -f ${WORKDIR}/service-account.yaml
 oc apply -f ${WORKDIR}/hazelcast-rbac.yaml
 
 oc secrets link hazelcast-enterprise-operator pull-secret --for=pull
-oc apply -f ${WORKDIR}/operator-rhel.yaml
+oc apply -f ${WORKDIR}/bundle-rhel.yaml
 
 # CREATE HAZELCAST ENTERPRISE KEY SECRET
 LICENSE_KEY=$(echo -n "${HZ_ENTERPRISE_LICENSE}" | base64 -w 0)
