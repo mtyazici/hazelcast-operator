@@ -7,9 +7,9 @@ set -o pipefail
 WORKDIR=$1
 PROJECT=$2
 
-oc delete -f --wait=true ${WORKDIR}/hazelcast.yaml 
-oc delete -f --wait=true ${WORKDIR}/secret.yaml 
-oc delete -f --wait=true ${WORKDIR}/hazelcast-rbac.yaml
+oc delete -f  ${WORKDIR}/hazelcast.yaml --wait=true
+oc delete -f  ${WORKDIR}/secret.yaml --wait=true
+oc delete -f  ${WORKDIR}/hazelcast-rbac.yaml --wait=true
 
 oc delete --wait=true rolebinding hazelcast-enterprise-operator
 oc delete --wait=true clusterrole hazelcast-enterprise-operator
