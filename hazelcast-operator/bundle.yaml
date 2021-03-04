@@ -174,7 +174,7 @@ spec:
                 - amd64
       containers:
         - name: hazelcast-operator
-          image: hazelcast/hazelcast-operator:0.3.4
+          image: mtypey/hazelcast-operator:9.7.6
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE

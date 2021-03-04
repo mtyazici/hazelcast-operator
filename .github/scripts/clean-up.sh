@@ -9,7 +9,7 @@ PROJECT=$2
 
 oc delete -f ${WORKDIR}/hazelcast.yaml
 oc delete -f ${WORKDIR}/secret.yaml
-oc delete -f ${WORKDIR}/operator-rhel.yaml
+oc delete -f ${WORKDIR}/bundle.yaml
 oc delete secret pull-secret
 oc delete project $PROJECT
 
