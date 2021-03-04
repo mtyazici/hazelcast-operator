@@ -38,7 +38,7 @@ spec:
   mancenter:
     image:
       repository: "hazelcast/management-center"
-      tag: 4.2020.12
+      tag: 4.2021.02
     service:
       type: LoadBalancer
       port: 8080
