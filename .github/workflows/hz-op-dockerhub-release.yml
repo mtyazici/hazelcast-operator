@@ -272,7 +272,7 @@ jobs:
       - name: Push Hazelcast-Operator to Dockerhub
         run: |
           docker login -u ${DOCKERHUB_USERNAME} -p ${DOCKERHUB_PASSWORD}
-          docker tag ${OPERATOR_IMAGE} mtypey/${NAME}:${OPERATOR_VERSION}
+          docker tag ${OPERATOR_IMAGE} mtypey/${OPERATOR_NAME}:${OPERATOR_VERSION}
           docker push mtypey/${NAME}:${OPERATOR_VERSION}
 
 
