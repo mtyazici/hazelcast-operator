@@ -5,23 +5,23 @@ on:
       OPERATOR_VERSION:
         description: 'OPERATOR_VERSION'
         required: true
-        default: '0.3.4'
+        default: '0.3.6'
       PREVIOUS_OPERATOR_VERSION:
         description: 'PREVIOUS_OPERATOR_VERSION'
         required: true
-        default: '0.3.3'
+        default: '0.3.5'
       HELM_CHART_VERSION:
         description: 'HELM_CHART_VERSION'
         required: true
-        default: '3.5.2'
+        default: '3.7.1'
       HAZELCAST_VERSION:
         description: 'HAZELCAST_VERSION'
         required: true
-        default: '4.1.1'
+        default: '4.2'
       MANCENTER_VERSION:
         description: 'MANCENTER_VERSION'
         required: true
-        default: '4.2020.12'
+        default: '4.2021.03'
       TIMEOUT_IN_MINS:
         description: 'TIMEOUT_IN_MINS'
         required: true
